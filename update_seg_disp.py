@@ -7,7 +7,7 @@ from time import sleep
 
 # Main worker function that watches for digit changes, applying as needed and
 # blinks the segments if in 2-segment mode.
-class Updater(threading.Thread):
+class SegmentUpdater(threading.Thread):
     def __init__(self, home, away, inning, l_pin, r_pin, q):
         threading.Thread.__init__(self)
         self.q = q
@@ -29,15 +29,15 @@ class Updater(threading.Thread):
                 val_dict = self.q.get()
                 for key, val in val_dict.items():
                     # Update display objects if name and val in the dict.
-                    if key == 'home':
+                    if key == 'home_team_runs':
                         self.refresh.home.updateCache(val)
-                    elif key == 'away':
+                    elif key == 'away_team_runs':
                         self.refresh.away.updateCache(val)
                     elif key == 'inning':
                         self.refresh.inning.updateCache(val)
                     elif key == 'inning_state':
                         # Home display's extra IO pin represents top, away's represents bottom.
-                        if val == 'top':
+                        if val == 'Top':
                             self.refresh.home.extra_pin_on = True
                             self.refresh.away.extra_pin_on = False
                         else:

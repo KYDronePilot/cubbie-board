@@ -1,24 +1,36 @@
-from mlbgame import day, overview
 from lcd_display import LogoDisplay
 from scoreboard import Scoreboard
 from sys import argv
 from time import sleep
+import segment_display
+from update_seg_disp import SegmentUpdater
+from Queue import Queue
 
 # Get the game ID as the one and only argument accepted by this script.
 game_id = argv[1]
 # Get a scoreboard object, and initialize both lcd displays.
 sb = Scoreboard(game_id)
-home_disp = LogoDisplay(25, 0)
-away_disp = LogoDisplay(23, 1)
-# Get an initial update of the scoreboard and display team logos.
-sb.update()
-home_disp.dispLogo(sb.home_team_name)
-away_disp.dispLogo(sb.away_team_name)
+home_lcd = LogoDisplay(25, 0)
+away_lcd = LogoDisplay(23, 1)
+# Create segment display objects for the home, away, and inning displays.
+home_segment = segment_display.MCP23008(1, 0x20)
+away_segment = segment_display.MCP23008(1, 0x22)
+inning_segment = segment_display.MCP23008(1, 0x24)
+# Queue to pass score and inning changes to the segment updater class.
+q = Queue(maxsize=2)
+# Object that handles updating the segment displays.
+segment_updater = SegmentUpdater(home_segment, away_segment, inning_segment, 4, 17, q)
+# Get the initial important values stored in the scoreboard object; the team names.
+sb.initialize()
+home_lcd.dispLogo(sb.home_team_name)
+away_lcd.dispLogo(sb.away_team_name)
 
 # Run main loop which updates the scoreboard until game ends.
 # TODO configure for when game gets delayed.
-while sb.game_status != 'FINAL':
-    # Update the scoreboard object.
-    sb.update()
-    # TODO update inning and score displays.
+while sb.game_status != 'Final':
+    # Update the scoreboard and get the changes in a dict.
+    changes = sb.updateLive()
+    # If there are changes, pass them to the segment display updater queue.
+    q.put(changes, True)
+    # Wait 10 seconds before scanning again.
     sleep(10)
