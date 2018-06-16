@@ -20,6 +20,8 @@ inning_segment = segment_display.MCP23008(1, 0x24)
 q = Queue(maxsize=2)
 # Object that handles updating the segment displays.
 segment_updater = SegmentUpdater(home_segment, away_segment, inning_segment, 4, 17, q)
+# Start the segment updater thread.
+segment_updater.start()
 # Get the initial important values stored in the scoreboard object; the team names.
 sb.initialize()
 home_lcd.dispLogo(sb.home_team_name)
