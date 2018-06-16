@@ -40,7 +40,7 @@ class SegmentUpdater(threading.Thread):
                         if val == 'Top':
                             self.refresh.home.extra_pin_on = True
                             self.refresh.away.extra_pin_on = False
-                        else:
+                        elif val == 'Bottom':
                             self.refresh.home.extra_pin_on = False
                             self.refresh.away.extra_pin_on = True
                 # After updating the values, set to the correct segment mode.

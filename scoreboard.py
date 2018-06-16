@@ -14,7 +14,7 @@ class Scoreboard:
         self.away_team_runs = 0
         self.home_team_runs = 0
         self.inning = 1
-        self.inning_state = 'Top'
+        self.inning_state = 'blank'
         self.game_status = 'Warmup'
 
     # Returns a new overview object.
