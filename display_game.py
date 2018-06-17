@@ -1,6 +1,6 @@
 from lcd_display import LogoDisplay
 from scoreboard import Scoreboard
-from sys import argv
+from sys import argv, exit
 from time import sleep
 import segment_display
 from update_seg_disp import SegmentUpdater
@@ -42,6 +42,7 @@ def main():
     # Once the game is over, delete the segment updater object.
     del segment_updater
     # TODO add other post-game operations, like displaying a Cubs 'W' logo when the Cubs win.
+    exit()
 
 
 # TODO configure for when game gets delayed.
@@ -50,3 +51,4 @@ try:
 # When a keyboard interrupt is received, delete the segment updater object.
 except KeyboardInterrupt:
     del segment_updater
+    exit()
