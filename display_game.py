@@ -39,10 +39,7 @@ def main():
             q.put(changes, True)
         # Wait 10 seconds before scanning again.
         sleep(10)
-    # Once the game is over, delete the segment updater object.
-    del segment_updater
     # TODO add other post-game operations, like displaying a Cubs 'W' logo when the Cubs win.
-    exit()
 
 
 # TODO configure for when game gets delayed.
