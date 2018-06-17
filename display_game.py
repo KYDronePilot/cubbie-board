@@ -48,7 +48,11 @@ def main():
 # TODO configure for when game gets delayed.
 try:
     main()
-# When a keyboard interrupt is received, delete the segment updater object.
+# Stop main when there is a keyboard interruption.
 except KeyboardInterrupt:
-    del segment_updater
-    exit()
+    pass
+
+# Close SegmentUpdater object.
+segment_updater.shut.set()
+del segment_updater
+
