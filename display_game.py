@@ -27,12 +27,26 @@ sb.initialize()
 home_lcd.dispLogo(sb.home_team_name)
 away_lcd.dispLogo(sb.away_team_name)
 
-# Run main loop which updates the scoreboard until game ends.
+
+# Main loop.
+def main():
+    # Run loop which updates the scoreboard until game ends.
+    while sb.game_status != 'Final':
+        # Update the scoreboard and get the changes in a dict.
+        changes = sb.updateLive()
+        # If there are changes, pass them to the segment display updater queue.
+        if changes != {}:
+            q.put(changes, True)
+        # Wait 10 seconds before scanning again.
+        sleep(10)
+    # Once the game is over, delete the segment updater object.
+    del segment_updater
+    # TODO add other post-game operations, like displaying a Cubs 'W' logo when the Cubs win.
+
+
 # TODO configure for when game gets delayed.
-while sb.game_status != 'Final':
-    # Update the scoreboard and get the changes in a dict.
-    changes = sb.updateLive()
-    # If there are changes, pass them to the segment display updater queue.
-    q.put(changes, True)
-    # Wait 10 seconds before scanning again.
-    sleep(10)
+try:
+    main()
+# When a keyboard interrupt is received, delete the segment updater object.
+except KeyboardInterrupt:
+    del segment_updater

@@ -20,6 +20,11 @@ class SegmentUpdater(threading.Thread):
         GPIO.output(l_pin, GPIO.LOW)
         GPIO.output(r_pin, GPIO.HIGH)
 
+    # Cleanup the GPIO and stop the thread when object is deleted.
+    def __del__(self):
+        GPIO.cleanup()
+        self.shut.set()
+
     # Actual thread that is run.
     def run(self):
         while not self.shut.is_set():
