@@ -37,6 +37,7 @@ def main():
         # If there are changes, pass them to the segment display updater queue.
         if changes != {}:
             q.put(changes, True)
+            print(changes)
         # Wait 10 seconds before scanning again.
         sleep(10)
     # TODO add other post-game operations, like displaying a Cubs 'W' logo when the Cubs win.
