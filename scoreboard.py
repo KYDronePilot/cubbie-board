@@ -13,7 +13,7 @@ class Scoreboard:
         self.home_team_name = 'blank'
         self.away_team_runs = 0
         self.home_team_runs = 0
-        self.inning = 1
+        self.inning = 0
         self.inning_state = 'blank'
         self.game_status = 'Warmup'
 
