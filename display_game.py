@@ -31,7 +31,7 @@ away_lcd.dispLogo(sb.away_team_name)
 # Main loop.
 def main():
     # Run loop which updates the scoreboard until game ends.
-    while sb.game_status != 'Final':
+    while sb.game_status != 'Game Over':
         # Update the scoreboard and get the changes in a dict.
         changes = sb.updateLive()
         # If there are changes, pass them to the segment display updater queue.
