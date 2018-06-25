@@ -13,13 +13,13 @@ sb = Scoreboard(game_id)
 home_lcd = LogoDisplay(25, 0)
 away_lcd = LogoDisplay(23, 1)
 # Create segment display objects for the home, away, and inning displays.
-home_segment = segment_display.MCP23008(1, 0x20)
-away_segment = segment_display.MCP23008(1, 0x22)
+home_segment = segment_display.MCP23008(1, 0x21)
+away_segment = segment_display.MCP23008(1, 0x20)
 inning_segment = segment_display.MCP23008(1, 0x24)
 # Queue to pass score and inning changes to the segment updater class.
 q = Queue(maxsize=2)
 # Object that handles updating the segment displays.
-segment_updater = SegmentUpdater(home_segment, away_segment, inning_segment, 4, 17, q)
+segment_updater = SegmentUpdater(home_segment, away_segment, inning_segment, 17, 4, q)
 # Start the segment updater thread.
 segment_updater.start()
 # Get the initial important values stored in the scoreboard object; the team names.
@@ -31,7 +31,7 @@ away_lcd.dispLogo(sb.away_team_name)
 # Main loop.
 def main():
     # Run loop which updates the scoreboard until game ends.
-    while sb.game_status != 'Game Over':
+    while True:
         # Update the scoreboard and get the changes in a dict.
         changes = sb.updateLive()
         # If there are changes, pass them to the segment display updater queue.
