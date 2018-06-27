@@ -49,11 +49,11 @@ def main():
 
 
 # TODO configure for when game gets delayed.
-try:
-    main()
+#try:
+main()
 # Stop main when there is a keyboard interruption.
-except:
-    pass
+#except:
+#    pass
 
 # Close SegmentUpdater object.
 segment_updater.shut.set()
