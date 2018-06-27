@@ -5,6 +5,7 @@ import Adafruit_GPIO.SPI as SPI
 import time
 from pwm_controller import PWMController
 
+
 # Default RST pins 25 and 23
 # Default SPI devices 0 and 1
 
@@ -31,19 +32,19 @@ class LogoDisplay:
                 self.SPI_PORT,
                 self.SPI_DEVICE,
                 max_speed_hz=self.SPEED_HZ
-                )
             )
+        )
         # Start PWM thread.
         self.pwm = PWMController(12, gpio)
         self.pwm.start()
         # Initialize display.
         self.disp.begin()
 
-    def __del__(self):
+    def __exit__(self, ext_type, exc_value, traceback):
         # Send stop signal to PWM thread and wait till it ends.
         self.pwm.shut.set()
         self.pwm.join()
-    
+
     # Display a given image.
     def displayImage(self, image):
         self.disp.display(image)

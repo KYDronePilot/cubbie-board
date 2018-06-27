@@ -15,7 +15,7 @@ class LcdController(object):
         self.home = home
         self.away = away
 
-    def __del__(self):
+    def __exit__(self, ext_type, exc_value, traceback):
         # Dim displays.
         self.home.pwm.q.put((0, 0, False), block=False)
         self.away.pwm.q.put((0, 0, False), block=False)
