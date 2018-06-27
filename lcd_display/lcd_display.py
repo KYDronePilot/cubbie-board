@@ -3,14 +3,13 @@ import ST7735 as TFT
 import Adafruit_GPIO as GPIO
 import Adafruit_GPIO.SPI as SPI
 import time
+from pwm_controller import PWMController
 
 # Default RST pins 25 and 23
 # Default SPI devices 0 and 1
 
 class LogoDisplay:
-    def __init__(self, RST, SPI_DEVICE):
-        # Key name of last displayed image, prevents unnecessary updates.
-        self.key_name = ''
+    def __init__(self, RST, SPI_DEVICE, pwm_pin, gpio):
         # Dimensions of Adafruit ST7735r display.
         self.WIDTH = 128
         self.HEIGHT = 128
@@ -34,14 +33,17 @@ class LogoDisplay:
                 max_speed_hz=self.SPEED_HZ
                 )
             )
+        # Start PWM thread.
+        self.pwm = PWMController(12, gpio)
+        self.pwm.start()
         # Initialize display.
         self.disp.begin()
+
+    def __del__(self):
+        # Send stop signal to PWM thread and wait till it ends.
+        self.pwm.shut.set()
+        self.pwm.join()
     
-    # Display the logo for a given team name (NL and AL logos included).
-    def dispLogo(self, team_name):
-        # Only update the display if key name is different than current.
-        if self.key_name != team_name:
-            self.key_name = team_name
-            # Get the logo and display it.
-            logo = Image.open('./logos/{0}.jpg'.format(team_name))
-            self.disp.display(logo)
+    # Display a given image.
+    def displayImage(self, image):
+        self.disp.display(image)
