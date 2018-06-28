@@ -41,9 +41,13 @@ class LogoDisplay:
         self.disp.begin()
 
     def __exit__(self, ext_type, exc_value, traceback):
+        print("LogoDisplay exit triggered")
         # Send stop signal to PWM thread and wait till it ends.
         self.pwm.shut.set()
         self.pwm.join()
+
+    def __del__(self):
+        print("LogoDisplay del triggered")
 
     # Display a given image.
     def displayImage(self, image):
