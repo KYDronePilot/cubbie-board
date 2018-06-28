@@ -53,6 +53,8 @@ class PWMController(threading.Thread):
                 self.update()
             # Sleep for designated time before re-checking.
             sleep(UPDATE_DELAY)
+        # Before thread ends, be sure to write last duty cycle to pin.
+        self.setPin()
 
     # Separate method for updating the the oscillation info.
     def update(self):
