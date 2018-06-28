@@ -15,17 +15,19 @@ class LcdController(object):
         self.home = home
         self.away = away
 
-    def __exit__(self, ext_type, exc_value, traceback):
-        print("LcdController exit triggered")
-        # Dim displays.
-        self.home.pwm.q.put((0, 0, False), block=False)
-        self.away.pwm.q.put((0, 0, False), block=False)
-        # Wait till dimmed.
-        while self.away.pwm.current > 0:
-            pass
-
     def __del__(self):
         print("LcdController del triggered")
+        # Dim displays.
+        self.away.pwm.q.put((0, 0, False), block=False)
+        self.home.pwm.q.put((0, 0, False), block=False)
+        # Wait till dimmed.
+        while self.away.pwm.current > 0 and self.home.pwm.current > 0:
+            pass
+        # Stop PWM threads.
+        self.home.pwm.shut.set()
+        self.away.pwm.shut.set()
+        self.home.pwm.join()
+        self.away.pwm.join()
 
     # For displaying a team logo.
     def displayLogo(self, home_away, team_name):

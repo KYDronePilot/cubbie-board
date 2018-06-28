@@ -12,10 +12,14 @@ from lcd_display.lcd_controller import LcdController
 game_id = argv[1]
 # Initialize pigpio object for PWM.
 gpio = pigpio.pi()
-# Get a scoreboard object, and initialize both lcd displays.
+# Get a scoreboard object, and initial important values stored in the scoreboard object; the team names.
 sb = Scoreboard(game_id)
+sb.initialize()
+# Initialize both LCD displays.
 home_lcd = LogoDisplay(25, 0, 12, gpio)
 away_lcd = LogoDisplay(23, 1, 13, gpio)
+# Give the LCD display objects to their controller.
+lcd_ctl = LcdController(home_lcd, away_lcd)
 # Create segment display objects for the home, away, and inning displays.
 home_segment = segment_display.MCP23008(1, 0x21)
 away_segment = segment_display.MCP23008(1, 0x20)
@@ -24,10 +28,6 @@ inning_segment = segment_display.MCP23008(1, 0x24)
 q = Queue(maxsize=2)
 # Object that handles updating the segment displays.
 segment_updater = SegmentUpdater(home_segment, away_segment, inning_segment, 17, 4, q)
-# Get the initial important values stored in the scoreboard object; the team names.
-sb.initialize()
-# Give the LCD display objects to their controller.
-lcd_ctl = LcdController(home_lcd, away_lcd)
 # Initialize LCD displays.
 lcd_ctl.init(sb.home_team_name, sb.away_team_name)
 # Start the segment updater thread.
@@ -49,12 +49,15 @@ def main():
 
 
 # TODO configure for when game gets delayed.
-#try:
-main()
+try:
+    main()
 # Stop main when there is a keyboard interruption.
-#except:
-#    pass
+except:
+    print("Exception received")
+
 
 # Close SegmentUpdater object.
-#segment_updater.shut.set()
-#del segment_updater
+segment_updater.shut.set()
+del segment_updater
+# Shut down LCD displays, in other words, dim screens and stop PWM threads.
+del lcd_ctl
