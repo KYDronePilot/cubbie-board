@@ -56,5 +56,5 @@ main()
 #    pass
 
 # Close SegmentUpdater object.
-segment_updater.shut.set()
-del segment_updater
+#segment_updater.shut.set()
+#del segment_updater
