@@ -45,6 +45,10 @@ class MCP23008(object):
         mcp.config(6, mcp.OUTPUT)
         mcp.config(7, mcp.OUTPUT)
 
+    # Set all IO pins to low on deconstruct.
+    def __del__(self):
+        self.writeNumber(10)
+
     # Set certain segments to HIGH.
     def writeHigh(self, pattern):
         # If extra pin is enabled, always ensure the last pin on the MCP23008 will be enabled.

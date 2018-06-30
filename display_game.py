@@ -55,6 +55,8 @@ try:
 except:
     print("Exception received")
 
+lcd_ctl.displayWinner('home', 'Cubs')
+sleep(10)
 
 # Close SegmentUpdater object.
 segment_updater.shut.set()

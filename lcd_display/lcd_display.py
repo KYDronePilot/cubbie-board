@@ -34,12 +34,24 @@ class LogoDisplay:
                 max_speed_hz=self.SPEED_HZ
             )
         )
+        # Holds the last image displayed.
+        self.image_cache = None
         # Start PWM thread.
         self.pwm = PWMController(pwm_pin, gpio)
         self.pwm.start()
         # Initialize display.
         self.disp.begin()
 
-    # Display a given image.
-    def displayImage(self, image):
+    # Display a cached image if none specified or a specified image.
+    def displayImage(self, image=None):
+        # If no image was specified, use the cache.
+        if image is None:
+            image = self.image_cache
+        # Fail-safe, if no image was in the cache either.
+        if image is None:
+            print('No image to display!')
+            return
+        # Cache the image.
+        self.image_cache = image
+        # Display the image.
         self.disp.display(image)
