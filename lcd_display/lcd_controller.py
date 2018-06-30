@@ -2,7 +2,7 @@
 from PIL import Image, ImageFont, ImageDraw
 from lcd_display import LogoDisplay
 
-FONT_DIR = 'fonts/'
+FONT_DIR = 'font/'
 
 # Thread to control LCD displays.
 class LcdController():
