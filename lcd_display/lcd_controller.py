@@ -47,6 +47,10 @@ class LcdController():
 
     # Show who won the game.
     def displayWinner(self, home_away, team_name):
+        # If the team that won is the Cubs, come one, there's gotta be a 'W'.
+        if team_name == 'Cubs':
+            self.displayImage(home_away, 'cubs_w_flag')
+            return
         # Get a font object.
         font = ImageFont.truetype(FONT_DIR + 'arial.ttf', 15)
         # Text to be written.
@@ -61,12 +65,11 @@ class LcdController():
         # Get draw object.
         draw = ImageDraw.Draw(image)
         # Draw a rectangular background to make the text stand out.
-        draw.rectangle((x - 5, y - 5, w + x + 5, h + y + 5), fill='black')
+        draw.rectangle((x - 5, y - 5, w + x + 5, h + y + 5), fill=(76, 76, 76))
         # Draw the text inside the box.
-        draw.text((x, y), text, fill=(180, 180, 180), font=font)
+        draw.text((x, y), text, fill=(255, 255, 255), font=font)
         # Display the image.
         getattr(self, home_away).displayImage(image=image)
-
 
     # Initialize display for start of game.
     def init(self, home, away):
