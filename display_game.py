@@ -29,8 +29,8 @@ class CubbieBoardDaemon(Daemon):
     segment_ctl = None  # type: SegmentController
 
     # Define all vars here, but don't initialize any of them.
-    def __init__(self):
-        Daemon.__init__(self)
+    def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+        Daemon.__init__(self, pidfile, stdin=stdin, stdout=stdout, stderr=stderr)
         # Pigpio daemon control object.
         self.gpio = None
         # Home and away LCD objects.
@@ -72,7 +72,9 @@ class CubbieBoardDaemon(Daemon):
             left_dig_tran=LEFT_DIGIT_TRANSISTOR,
             right_dig_tran=RIGHT_DIGIT_TRANSISTOR
         )
-        # Signify that the displays are of.
+        # Start segment controller thread.
+        self.segment_ctl.start()
+        # Signify that the displays are off.
         self.displays_on = False
         # Holds a queue with active games that can be refilled with the refill method.
         self.active_games = ActiveGames(PREFERRED_TEAM)
@@ -105,6 +107,9 @@ class CubbieBoardDaemon(Daemon):
 
     # Main loop, manages everything.
     def run(self):
+        f = open('/dev/stdout', 'w')
+        f.write('Run method activated')
+        f.close()
         # Run all initialization tasks.
         self.init()
         # Run till control var says to stop.
@@ -130,8 +135,10 @@ class CubbieBoardDaemon(Daemon):
                 changes = self.sb.update()
                 # Send changes to the segment displays controller.
                 self.segment_ctl.q.put(changes, block=False)
+                f.write('Changes just placed in segment display queue')
+                f.close()
                 # Display the team logos and brighten the screens if dim.
-                self.lcd_ctl.showTeams(sb.home_team_name, sb.away_team_name)
+                self.lcd_ctl.showTeams(self.sb.home_team_name, self.sb.away_team_name)
                 # Wait before checking moving to the next game.
                 self.sleep(10)
         # Close SegmentUpdater object.
@@ -141,7 +148,7 @@ class CubbieBoardDaemon(Daemon):
         del self.lcd_ctl
 
 
-exit()
+'''
 
 # Get the game ID as the one and only argument accepted by this script.
 game_id = argv[1]
@@ -187,3 +194,5 @@ segment_ctl.shut.set()
 del segment_ctl
 # Shut down LCD displays, in other words, dim screens and stop PWM threads.
 del lcd_ctl
+
+'''
