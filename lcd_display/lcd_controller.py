@@ -4,6 +4,7 @@ from lcd_display import LogoDisplay
 
 FONT_DIR = 'font/'
 
+
 # Thread to control LCD displays.
 class LcdController():
     def __init__(self, home, away):
@@ -20,18 +21,22 @@ class LcdController():
         self.away_image = None
 
     def __del__(self):
-        print("LcdController del triggered")
+        # Dim displays.
+        self.off()
+        # Stop PWM threads.
+        self.home.pwm.shut.set()
+        self.away.pwm.shut.set()
+        self.home.pwm.join()
+        self.away.pwm.join()
+
+    # Turn off the backlight for both displays.
+    def off(self):
         # Dim displays.
         self.away.pwm.q.put((0, 0, False), block=False)
         self.home.pwm.q.put((0, 0, False), block=False)
         # Wait till dimmed.
         while self.away.pwm.current > 0 or self.home.pwm.current > 0:
             pass
-        # Stop PWM threads.
-        self.home.pwm.shut.set()
-        self.away.pwm.shut.set()
-        self.home.pwm.join()
-        self.away.pwm.join()
 
     # For displaying a team logo.
     def displayLogo(self, home_away, team_name):
@@ -71,11 +76,11 @@ class LcdController():
         # Display the image.
         getattr(self, home_away).displayImage(image=image)
 
-    # Initialize display for start of game.
-    def init(self, home, away):
-        # display the home and away logos.
+    # Show the logos of the teams that are playing.
+    def showTeams(self, home, away):
+        # Display the home and away logos.
         self.displayLogo('home', home)
         self.displayLogo('away', away)
-        # Raise the brightness on both displays.
+        # Brighten screens if dim.
         self.home.pwm.q.put((100, 100, False), block=False)
         self.away.pwm.q.put((100, 100, False), block=False)
