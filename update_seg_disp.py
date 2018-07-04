@@ -2,23 +2,27 @@
 
 import threading
 import RPi.GPIO as GPIO
+from Queue import Queue
 from time import sleep
+
+from segment_display import MCP23008
 
 
 # Main worker function that watches for digit changes, applying as needed and
 # blinks the segments if in 2-segment mode.
-class SegmentUpdater(threading.Thread):
-    def __init__(self, home, away, inning, l_pin, r_pin, q):
+class SegmentController(threading.Thread):
+    def __init__(self, home, away, inning, left_dig_tran, right_dig_tran):
         threading.Thread.__init__(self)
-        self.q = q
-        self.refresh = Refresh(home, away, inning, l_pin, r_pin)
+        # For getting updates to this thread.
+        self.q = Queue(maxsize=2)
+        self.refresh = Refresh(home, away, inning, left_dig_tran, right_dig_tran)
         self.single_mode = True
         self.shut = threading.Event()
-        # Initial display update, zero them out.
-        self.refresh.updateSingle()
+        # Initialize with the displays turned off.
+        self.refresh.off()
         # Initial set to the right digit.
-        GPIO.output(l_pin, GPIO.LOW)
-        GPIO.output(r_pin, GPIO.HIGH)
+        GPIO.output(left_dig_tran, GPIO.LOW)
+        GPIO.output(right_dig_tran, GPIO.HIGH)
 
     # Cleanup the GPIO on delete.
     def __del__(self):
@@ -47,6 +51,9 @@ class SegmentUpdater(threading.Thread):
                         elif val == 'Bottom':
                             self.refresh.home.extra_pin_on = False
                             self.refresh.away.extra_pin_on = True
+                    # Shut off all displays.
+                    elif key == 'off':
+                        self.refresh.off()
                 # After updating the values, set to the correct segment mode.
                 self.checkMode()
                 # Depending on the mode, update the display accordingly.
@@ -75,6 +82,12 @@ class SegmentUpdater(threading.Thread):
 # Handles refreshing of the displays.
 class Refresh(object):
     def __init__(self, home, away, inning, l_pin, r_pin):
+        """
+
+        :type home: MCP23008
+        :type away: MCP23008
+        :type inning: MCP23008
+        """
         # Display objects.
         self.home = home
         self.away = away
@@ -120,6 +133,12 @@ class Refresh(object):
         self.home.writeNumber(10)
         self.away.writeNumber(10)
         self.inning.writeNumber(10)
+
+    # Turn off all displays.
+    def off(self):
+        self.home.off()
+        self.away.off()
+        self.inning.off()
 
     # Write to the left or right digit of every display.
     def write(self, digit):
