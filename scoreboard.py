@@ -1,13 +1,11 @@
 from mlbgame import overview
 
 
-# from datetime import datetime
-
-# Hold game information needed by peripherals.
+# For holding live information on a game.
 class Scoreboard:
-    def __init__(self, game_id):
-        # Store game_id as a member.
-        self.game_id = game_id
+    def __init__(self):
+        # Initialize to None, needs to be changed by main daemon before use.
+        self.game_id = None
         # Initialize all other members here.
         self.away_team_name = 'blank'
         self.home_team_name = 'blank'
@@ -19,6 +17,9 @@ class Scoreboard:
 
     # Returns a new overview object.
     def refreshOverview(self):
+        # If no game_id specified, raise an error.
+        if self.game_id is None:
+            raise ValueError('No game_id specified for scoreboard instance')
         # Try to get a new overview object.
         try:
             stats = overview(self.game_id)
@@ -27,20 +28,17 @@ class Scoreboard:
             pass
         return stats
 
-    # Get the initial important information about the game; the team names.
-    def initialize(self):
-        # Get a new overview object.
-        stats = self.refreshOverview()
-        # Update members.
-        self.away_team_name = stats.away_team_name
-        self.home_team_name = stats.home_team_name
-
     # For getting updates on the current score, inning, and game status.
-    def updateLive(self):
+    def update(self):
         # Refresh the overview object.
         stats = self.refreshOverview()
         # Empty dict for any updates.
         changes = dict()
+        # Update home and away team names.
+        self.home_team_name = stats.home_team_name
+        self.away_team_name = stats.away_team_name
+        # Update the game status.
+        self.game_status = stats.status
         # If a field changed, append to changes and update its member.
         if self.away_team_runs != stats.away_team_runs:
             changes['away_team_runs'] = stats.away_team_runs
@@ -54,7 +52,4 @@ class Scoreboard:
         if self.inning_state != stats.inning_state:
             changes['inning_state'] = stats.inning_state
             self.inning_state = stats.inning_state
-        # No need to append to changes, as the segment displays don't need this information.
-        if self.game_status != stats.status:
-            self.game_status = stats.status
         return changes
