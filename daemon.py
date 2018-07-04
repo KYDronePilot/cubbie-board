@@ -16,6 +16,8 @@ class Daemon:
         self.stdout = stdout
         self.stderr = stderr
         self.pidfile = pidfile
+        # Added by KYDronePilot, safe way of shutting down the daemon without killing it.
+        self.shut = False
 
     def daemonize(self):
         """
@@ -82,6 +84,8 @@ class Daemon:
             sys.stderr.write(message % self.pidfile)
             sys.exit(1)
 
+        # Added by KYDronePilot, ensure shutdown control var is set to False.
+        self.shut = False
         # Start the daemon
         self.daemonize()
         self.run()
@@ -102,6 +106,10 @@ class Daemon:
             message = "pidfile %s does not exist. Daemon not running?\n"
             sys.stderr.write(message % self.pidfile)
             return  # not an error in a restart
+
+        # Added by KYDronePilot, try to shut down daemon safely using shutdown boolean var.
+        self.shut = True
+        time.sleep(15)
 
         # Try killing the daemon process
         try:
