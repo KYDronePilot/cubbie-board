@@ -24,9 +24,10 @@ class SegmentController(threading.Thread):
         GPIO.output(left_dig_tran, GPIO.LOW)
         GPIO.output(right_dig_tran, GPIO.HIGH)
 
-    # Cleanup the GPIO on delete.
+    # Cleanup the GPIO and shut off the displays on delete.
     def __del__(self):
         GPIO.cleanup()
+        self.refresh.off()
 
     # Actual thread that is run.
     def run(self):

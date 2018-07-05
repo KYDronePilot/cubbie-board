@@ -1,13 +1,13 @@
 from lcd_display.lcd_display import LogoDisplay
 from scoreboard import Scoreboard
-from sys import argv
 from time import sleep
 import segment_display
 from update_seg_disp import SegmentController
 import pigpio
 from lcd_display.lcd_controller import LcdController
-from daemon import Daemon
+import daemon
 from active_games import ActiveGames
+from os.path import isfile
 
 # I2C addresses for the controllers of the segment displays.
 HOME_SEG_ADDR = 0x21
@@ -22,7 +22,7 @@ PREFERRED_TEAM = 'Cubs'
 
 
 # Main daemon that drives everything.
-class CubbieBoardDaemon(Daemon):
+class CubbieBoardDaemon(daemon.Daemon):
     sb = None  # type: Scoreboard
     active_games = None  # type: ActiveGames
     lcd_ctl = None  # type: LcdController
@@ -30,7 +30,7 @@ class CubbieBoardDaemon(Daemon):
 
     # Define all vars here, but don't initialize any of them.
     def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-        Daemon.__init__(self, pidfile, stdin=stdin, stdout=stdout, stderr=stderr)
+        daemon.Daemon.__init__(self, pidfile, stdin=stdin, stdout=stdout, stderr=stderr)
         # Pigpio daemon control object.
         self.gpio = None
         # Home and away LCD objects.
@@ -50,6 +50,8 @@ class CubbieBoardDaemon(Daemon):
         self.displays_on = False
         # Scoreboard for getting the latest game info.
         self.sb = None
+        # For holding the game currently being displayed.
+        self.game = None
 
     # Initialize all display hardware and related controllers.
     def init(self):
@@ -90,6 +92,11 @@ class CubbieBoardDaemon(Daemon):
         # Set the display status var to off.
         self.displays_on = False
 
+    # For determining if the daemon should still be running.
+    def running(self):
+        # If daemon status file exists, return True, else False.
+        return isfile(daemon.DAEMON_STATUS_DIR + 'running')
+
     # Special sleep function, checks daemon control var at 1 second intervals.
     def sleep(self, secs):
         """
@@ -99,21 +106,37 @@ class CubbieBoardDaemon(Daemon):
         # Use passed secs var as a counter.
         while secs > 0:
             # If daemon needs to stop, return here.
-            if self.shut:
+            if not self.running():
                 return
             secs -= 1
             # Wait a sec...
             sleep(1)
 
+    # Display a new game.
+    def new(self, game):
+        # Assign the game as an attribute.
+        self.game = game
+        # Update the scoreboard and segment displays.
+        self.update()
+        # Display the team logos and brighten the screens if dim.
+        self.lcd_ctl.showTeams(self.sb.home_team_name, self.sb.away_team_name)
+        # Signify that the display should be on.
+        self.displays_on = True
+
+    # Update game data on a running game.
+    def update(self):
+        # Get a live scoreboard for that game.
+        self.sb.game_id = self.game.game_id
+        changes = self.sb.update()
+        # Send changes to the segment displays controller.
+        self.segment_ctl.q.put(changes, block=False)
+
     # Main loop, manages everything.
     def run(self):
-        f = open('/dev/stdout', 'w')
-        f.write('Run method activated')
-        f.close()
         # Run all initialization tasks.
         self.init()
         # Run till control var says to stop.
-        while not self.shut:
+        while self.running():
             # Check if there are any live games.
             if self.active_games.q.empty():
                 # If none in queue, try to refill.
@@ -128,23 +151,19 @@ class CubbieBoardDaemon(Daemon):
                     continue
             # Else, there are active games.
             else:
-                # Pop a game off the queue.
+                # Get a game from the queue and see if that game is already being displayed.
                 game = self.active_games.q.get()
-                # Get a live scoreboard for that game.
-                self.sb.game_id = game.game_id
-                changes = self.sb.update()
-                # Send changes to the segment displays controller.
-                self.segment_ctl.q.put(changes, block=False)
-                f.write('Changes just placed in segment display queue')
-                f.close()
-                # Display the team logos and brighten the screens if dim.
-                self.lcd_ctl.showTeams(self.sb.home_team_name, self.sb.away_team_name)
-                # Wait before checking moving to the next game.
+                # If it is already being displayed, update it.
+                if game.game_id == self.game.game_id:
+                    self.update()
+                # Otherwise, treat it as a new game.
+                else:
+                    self.new(game)
+                # Wait before refreshing or moving to the next game.
                 self.sleep(10)
-        # Close SegmentUpdater object.
+        # Shut down both controllers.
         self.segment_ctl.shut.set()
         del self.segment_ctl
-        # Shut down LCD displays, in other words, dim screens and stop PWM threads.
         del self.lcd_ctl
 
 

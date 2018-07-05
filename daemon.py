@@ -27,6 +27,9 @@ import sys
 import time
 import signal
 
+# Directory that holds an empty file signifying whether the daemon should be running or not.
+DAEMON_STATUS_DIR = 'daemon_status/'
+
 
 class Daemon(object):
     """
@@ -162,6 +165,9 @@ class Daemon(object):
 
         # Start the daemon
         self.daemonize()
+        # Create empty file 'running' to signify the daemon should be running.
+        open(DAEMON_STATUS_DIR + 'running', 'a').close()
+        # Call to overrided run method.
         self.run(*args, **kwargs)
 
     def stop(self):
@@ -185,6 +191,10 @@ class Daemon(object):
                 os.remove(self.pidfile)
 
             return  # Not an error in a restart
+
+        # Before killing, remove 'running' status file to try to safely shut down the daemon.
+        os.remove(DAEMON_STATUS_DIR + 'running')
+        time.sleep(10)
 
         # Try killing the daemon process
         try:
