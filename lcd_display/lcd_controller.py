@@ -6,7 +6,7 @@ FONT_DIR = 'font/'
 
 
 # Thread to control LCD displays.
-class LcdController():
+class LcdController:
     def __init__(self, home, away):
         """
 
