@@ -194,9 +194,9 @@ class Daemon(object):
 
         # Before killing, remove 'running' status file to try to safely shut down the daemon.
         os.remove(DAEMON_STATUS_DIR + 'running')
-        time.sleep(10)
+        time.sleep(5)
 
-        # Try killing the daemon process
+        # Try killing the daemon process if safe shutdown didn't work.
         try:
             i = 0
             while 1:

@@ -1,13 +1,15 @@
+from os.path import isfile
+from time import sleep
+
+import pigpio
+
+import daemon
+import segment_display
+from active_games import ActiveGames
+from lcd_display.lcd_controller import LcdController
 from lcd_display.lcd_display import LogoDisplay
 from scoreboard import Scoreboard
-from time import sleep
-import segment_display
 from update_seg_disp import SegmentController
-import pigpio
-from lcd_display.lcd_controller import LcdController
-import daemon
-from active_games import ActiveGames
-from os.path import isfile
 
 # I2C addresses for the controllers of the segment displays.
 HOME_SEG_ADDR = 0x21
@@ -149,18 +151,17 @@ class CubbieBoardDaemon(daemon.Daemon):
                     # Wait 10 minutes before checking again for games.
                     self.sleep(600)
                     continue
-            # Else, there are active games.
+            # There is a live game if the execution reaches here.
+            # Get a game from the queue and see if that game is already being displayed.
+            game = self.active_games.q.get()
+            # If not first time through and it is already being displayed, update it.
+            if self.game is not None and game.game_id == self.game.game_id:
+                self.update()
+            # Otherwise, treat it as a new game.
             else:
-                # Get a game from the queue and see if that game is already being displayed.
-                game = self.active_games.q.get()
-                # If not first time through and it is already being displayed, update it.
-                if self.game is not None and game.game_id == self.game.game_id:
-                    self.update()
-                # Otherwise, treat it as a new game.
-                else:
-                    self.new(game)
-                # Wait before refreshing or moving to the next game.
-                self.sleep(10)
+                self.new(game)
+            # Wait before refreshing or moving to the next game.
+            self.sleep(10)
         # Shut down both controllers.
         self.segment_ctl.shut.set()
         del self.segment_ctl
