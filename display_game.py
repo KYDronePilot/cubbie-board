@@ -153,8 +153,8 @@ class CubbieBoardDaemon(daemon.Daemon):
             else:
                 # Get a game from the queue and see if that game is already being displayed.
                 game = self.active_games.q.get()
-                # If it is already being displayed, update it.
-                if game.game_id == self.game.game_id:
+                # If not first time through and it is already being displayed, update it.
+                if self.game is not None and game.game_id == self.game.game_id:
                     self.update()
                 # Otherwise, treat it as a new game.
                 else:
