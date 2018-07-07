@@ -77,10 +77,22 @@ class LcdController:
         getattr(self, home_away).displayImage(image=image)
 
     # Show the logos of the teams that are playing.
-    def showTeams(self, home, away):
-        # Display the home and away logos.
-        self.displayLogo('home', home)
-        self.displayLogo('away', away)
-        # Brighten screens if dim.
-        self.home.pwm.q.put((100, 100, False), block=False)
-        self.away.pwm.q.put((100, 100, False), block=False)
+    def showTeams(self, home, away, winner=None):
+        # If a winner is specified, call display winner function and exit.
+        if winner is not None:
+            # If the home team won, refresh away display and display winner on home display.
+            if winner == 'home':
+                self.displayWinner(winner, home)
+                self.displayLogo('away', away)
+            # Else, do opposite.
+            else:
+                self.displayWinner(winner, away)
+                self.displayLogo('home', home)
+        # If no winner specified, just display logos.
+        else:
+            # Display the home and away logos.
+            self.displayLogo('home', home)
+            self.displayLogo('away', away)
+            # Brighten screens if dim.
+            self.home.pwm.q.put((100, 100, False), block=False)
+            self.away.pwm.q.put((100, 100, False), block=False)
