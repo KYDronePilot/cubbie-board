@@ -118,20 +118,32 @@ class CubbieBoardDaemon(daemon.Daemon):
     def new(self, game):
         # Assign the game as an attribute.
         self.game = game
-        # Update the scoreboard and segment displays.
-        self.update()
-        # Display the team logos and brighten the screens if dim.
-        self.lcd_ctl.showTeams(self.sb.home_team_name, self.sb.away_team_name)
+        # Update the scoreboard and segment displays, retrieving a winner if exists.
+        winner = self.update()
+        # Display the team logos including a winner if exists and brighten the screens if dim.
+        self.lcd_ctl.showTeams(self.sb.home_team_name, self.sb.away_team_name, winner=winner)
         # Signify that the display should be on.
         self.displays_on = True
 
-    # Update game data on a running game.
+    # TODO somehow allow the update function to display the winner on its own if the first time it has seen it
+
+
+    # Update game data on a running game, returning a winner if exists.
     def update(self):
+        # Holds winner if one exists.
+        winner = None
         # Get a live scoreboard for that game.
         self.sb.game_id = self.game.game_id
         changes = self.sb.update()
+        # If the game status has changed, check if the game is over.
+        if 'status' in changes:
+            if changes['status'] == 'Game Over' or changes['status'] == 'Final':
+                # If status is over or final determine the winner.
+                winner = self.sb.getWinner()
         # Send changes to the segment displays controller.
         self.segment_ctl.q.put(changes, block=False)
+        # Return the winner if exists, else will be None.
+        return winner
 
     # Main loop, manages everything.
     def run(self):
@@ -155,7 +167,7 @@ class CubbieBoardDaemon(daemon.Daemon):
             # Get a game from the queue and see if that game is already being displayed.
             game = self.active_games.q.get()
             # If not first time through and it is already being displayed, update it.
-            if self.game is not None and game.game_id == self.game.game_id:
+            if self.game is not None and game.game_id == self.game.game_id and game.game_status != 'FINAL':
                 self.update()
             # Otherwise, treat it as a new game.
             else:
