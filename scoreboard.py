@@ -37,8 +37,6 @@ class Scoreboard:
         # Update home and away team names.
         self.home_team_name = stats.home_team_name
         self.away_team_name = stats.away_team_name
-        # Update the game status.
-        self.game_status = stats.status
         # If a field changed, append to changes and update its member.
         if self.away_team_runs != stats.away_team_runs:
             changes['away_team_runs'] = stats.away_team_runs
@@ -52,4 +50,14 @@ class Scoreboard:
         if self.inning_state != stats.inning_state:
             changes['inning_state'] = stats.inning_state
             self.inning_state = stats.inning_state
+        if self.game_status != stats.status:
+            changes['status'] = stats.status
+            self.game_status = stats.status
         return changes
+
+    # Determine the winner of a game.
+    def getWinner(self):
+        # If home team has more runs, return home, else away.
+        if self.home_team_runs > self.away_team_runs:
+            return 'home'
+        return 'away'
