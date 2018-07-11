@@ -38,24 +38,26 @@ class LcdController:
         while self.away.pwm.current > 0 or self.home.pwm.current > 0:
             pass
 
-    # For displaying a team logo.
-    def displayLogo(self, home_away, team_name):
-        # Display image by specifying the path where logos are and inserting the team name.
-        self.displayImage(home_away, 'logos/{}'.format(team_name))
+    # Get an image object.
+    def getImage(self, filename, logo=False):
+        # Extra path to team logos.
+        logo_path = str()
+        # If the image is a logo, set the path.
+        if logo:
+            logo_path = 'logos/'
+        # Open the specified file and return it.
+        return Image.open('img/{0}{1}.jpg'.format(logo_path, filename))
 
-    # Display an image by its file name.
-    def displayImage(self, home_away, filename):
-        # Open the specified file.
-        im = Image.open('img/{}.jpg'.format(filename))
+    # Display an image object.
+    def displayImageObj(self, home_away, image):
         # Display it on the specified display.
-        getattr(self, home_away).displayImage(image=im)
+        getattr(self, home_away).displayImage(image=image)
 
-    # Show who won the game.
-    def displayWinner(self, home_away, team_name):
-        # If the team that won is the Cubs, come one, there's gotta be a 'W'.
+    # Render an image to be displayed that shows who won on the winner's LCD display.
+    def renderWinner(self, team_name, image):
+        # If the team that won is the Cubs, come on, there's gotta be a 'W'.
         if team_name == 'Cubs':
-            self.displayImage(home_away, 'cubs_w_flag')
-            return
+            return self.getImage('cubs_w_flag')
         # Get a font object.
         font = ImageFont.truetype(FONT_DIR + 'arial.ttf', 15)
         # Text to be written.
@@ -65,34 +67,29 @@ class LcdController:
         # Where the text will be drawn.
         x = 5
         y = 128 - h - 5
-        # Get image from cache.
-        image = getattr(self, home_away).image_cache
         # Get draw object.
         draw = ImageDraw.Draw(image)
         # Draw a rectangular background to make the text stand out.
         draw.rectangle((x - 5, y - 5, w + x + 5, h + y + 5), fill=(76, 76, 76))
         # Draw the text inside the box.
         draw.text((x, y), text, fill=(255, 255, 255), font=font)
-        # Display the image.
-        getattr(self, home_away).displayImage(image=image)
+        # Return image.
+        return image
 
-    # Show the logos of the teams that are playing.
-    def showTeams(self, home, away, winner=None):
-        # If a winner is specified, call display winner function and exit.
-        if winner is not None:
-            # If the home team won, refresh away display and display winner on home display.
-            if winner == 'home':
-                self.displayWinner(winner, home)
-                self.displayLogo('away', away)
-            # Else, do opposite.
-            else:
-                self.displayWinner(winner, away)
-                self.displayLogo('home', home)
-        # If no winner specified, just display logos.
-        else:
-            # Display the home and away logos.
-            self.displayLogo('home', home)
-            self.displayLogo('away', away)
-            # Brighten screens if dim.
-            self.home.pwm.q.put((100, 100, False), block=False)
-            self.away.pwm.q.put((100, 100, False), block=False)
+    # Show team logos, overlaying any necessary information based on extra kwargs.
+    def displayLogos(self, home_team, away_team, **kwargs):
+        # Get team logos.
+        home_logo = self.getImage(home_team, logo=True)
+        away_logo = self.getImage(away_team, logo=True)
+        # Perform operations based on kwargs.
+        for key, val in kwargs.items():
+            # If a winner is specified, alter their team logo accordingly.
+            if key == 'winner':
+                # Update the logo of the winning team.
+                exec ("{0}_logo = self.renderWinner('{1}', {0}_logo)".format(val[0], val[1]))
+        # Display the images.
+        self.displayImageObj('home', home_logo)
+        self.displayImageObj('away', away_logo)
+        # Brighten screens if dim.
+        self.home.pwm.q.put((100, 100, False), block=False)
+        self.away.pwm.q.put((100, 100, False), block=False)
