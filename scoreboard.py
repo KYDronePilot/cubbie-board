@@ -28,12 +28,17 @@ class Scoreboard:
             pass
         return stats
 
-    # For getting updates on the current score, inning, and game status.
-    def update(self):
-        # Refresh the overview object.
-        stats = self.refreshOverview()
+    # For getting updates on the current score, inning, and game status for a game_id.
+    def update(self, game_id):
         # Empty dict for any updates.
         changes = dict()
+        # Check if the provided game_id is different from the current one.
+        if game_id != self.game_id:
+            # If they don't match, add 'new_game' key to changes and update game_id.
+            changes['new_game'] = None
+            self.game_id = game_id
+        # Refresh the overview object.
+        stats = self.refreshOverview()
         # Update home and away team names.
         self.home_team_name = stats.home_team_name
         self.away_team_name = stats.away_team_name
@@ -57,7 +62,7 @@ class Scoreboard:
 
     # Determine the winner of a game.
     def getWinner(self):
-        # If home team has more runs, return home, else away.
+        # If home team has more runs, return tuple of home and team name, else away and team name.
         if self.home_team_runs > self.away_team_runs:
-            return 'home'
-        return 'away'
+            return 'home', self.home_team_name
+        return 'away', self.away_team_name
