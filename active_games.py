@@ -69,7 +69,7 @@ class ActiveGames:
             # Get time elapsed since game begun.
             elapsed_time = sb.elapsed_time
             # Create an ET timezone-aware datetime object for start time.
-            start = datetime.strptime(start_time, "%Y/%m/%d %-I:%M %p")
+            start = datetime.strptime(start_time, "%Y/%m/%d %I:%M %p")
             start = pytz.timezone(ET_TZ).localize(start)
             # Retrieve hours and minutes of elapsed time in string form.
             hours, minutes = elapsed_time.split(':')
