@@ -95,7 +95,8 @@ class CubbieBoardDaemon(daemon.Daemon):
         self.displays_on = False
 
     # For determining if the daemon should still be running.
-    def running(self):
+    @staticmethod
+    def running():
         # If daemon status file exists, return True, else False.
         return isfile(daemon.DAEMON_STATUS_DIR + 'running')
 
@@ -114,36 +115,17 @@ class CubbieBoardDaemon(daemon.Daemon):
             # Wait a sec...
             sleep(1)
 
-    # Display a new game.
-    def new(self, game):
-        # Assign the game as an attribute.
-        self.game = game
-        # Update the scoreboard and segment displays, retrieving a winner if exists.
-        winner = self.update()
-        # Display the team logos including a winner if exists and brighten the screens if dim.
-        self.lcd_ctl.showTeams(self.sb.home_team_name, self.sb.away_team_name, winner=winner)
+    # Update the LCD displays.
+    def updateLCD(self):
+        # Extra kwargs to pass to display function.
+        kwargs = dict()
+        # If game is over or final, add winner as a kwarg for the display function.
+        if self.sb.game_status == 'Game Over' or self.sb.game_status == 'Final':
+            kwargs['winner'] = self.sb.getWinner()
+        # Update the display.
+        self.lcd_ctl.displayLogos(self.sb.home_team_name, self.sb.away_team_name, **kwargs)
         # Signify that the display should be on.
         self.displays_on = True
-
-    # TODO somehow allow the update function to display the winner on its own if the first time it has seen it
-
-
-    # Update game data on a running game, returning a winner if exists.
-    def update(self):
-        # Holds winner if one exists.
-        winner = None
-        # Get a live scoreboard for that game.
-        self.sb.game_id = self.game.game_id
-        changes = self.sb.update()
-        # If the game status has changed, check if the game is over.
-        if 'status' in changes:
-            if changes['status'] == 'Game Over' or changes['status'] == 'Final':
-                # If status is over or final determine the winner.
-                winner = self.sb.getWinner()
-        # Send changes to the segment displays controller.
-        self.segment_ctl.q.put(changes, block=False)
-        # Return the winner if exists, else will be None.
-        return winner
 
     # Main loop, manages everything.
     def run(self):
@@ -166,65 +148,19 @@ class CubbieBoardDaemon(daemon.Daemon):
             # There is a live game if the execution reaches here.
             # Get a game from the queue and see if that game is already being displayed.
             game = self.active_games.q.get()
-            # If not first time through and it is already being displayed, update it.
-            if self.game is not None and game.game_id == self.game.game_id and game.game_status != 'FINAL':
-                self.update()
-            # Otherwise, treat it as a new game.
-            else:
-                self.new(game)
+            # If this is the first time through or a new game is to be displayed, reset this class's game object.
+            if self.game is None or game.game_id != self.game.game_id:
+                self.game = game
+            # Update the scoreboard and get changes.
+            changes = self.sb.update(game.game_id)
+            # If a new game or status change, update the LCD displays.
+            if 'new_game' in changes or 'status' in changes:
+                self.updateLCD()
+            # Update the segment displays.
+            self.segment_ctl.q.put(changes, block=False)
             # Wait before refreshing or moving to the next game.
             self.sleep(10)
         # Shut down both controllers.
         self.segment_ctl.shut.set()
         del self.segment_ctl
         del self.lcd_ctl
-
-
-'''
-
-# Get the game ID as the one and only argument accepted by this script.
-game_id = argv[1]
-
-# Get a scoreboard object, and initial important values stored in the scoreboard object; the team names.
-sb = Scoreboard(game_id)
-sb.initialize()
-
-# Object that handles updating the segment displays.
-segment_ctl = SegmentController(home_segment, away_segment, inning_segment, 17, 4, q)
-# Initialize LCD displays.
-lcd_ctl.init(sb.home_team_name, sb.away_team_name)
-# Start the segment updater thread.
-segment_ctl.start()
-
-
-# Main loop.
-def main():
-    # Run loop which updates the scoreboard until game ends.
-    while sb.game_status == running_status:
-        # Update the scoreboard and get the changes in a dict.
-        changes = sb.updateLive()
-        # If there are changes, pass them to the segment display updater queue.
-        if changes != {}:
-            q.put(changes, True)
-        # Wait 10 seconds before scanning again.
-        sleep(10)
-    # TODO add other post-game operations, like displaying a Cubs 'W' logo when the Cubs win.
-
-
-# TODO configure for when game gets delayed.
-try:
-    main()
-# Stop main when there is a keyboard interruption.
-except:
-    print("Exception received")
-
-lcd_ctl.displayWinner('home', 'Cubs')
-sleep(10)
-
-# Close SegmentUpdater object.
-segment_ctl.shut.set()
-del segment_ctl
-# Shut down LCD displays, in other words, dim screens and stop PWM threads.
-del lcd_ctl
-
-'''
