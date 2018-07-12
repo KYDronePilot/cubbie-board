@@ -33,7 +33,7 @@ class SegmentController(threading.Thread):
     def run(self):
         while not self.shut.is_set():
             # Wait a little bit before checking the queue.
-            sleep(0.01)
+            sleep(0.005)
             # If there is something in the queue, update displays.
             if not self.q.empty():
                 # Get dictionary of updated values.
