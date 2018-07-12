@@ -7,6 +7,8 @@ from time import sleep
 
 from segment_display import MCP23008
 
+# Number of iterations before checking the queue.
+COUNTER = 100
 
 # Main worker function that watches for digit changes, applying as needed and
 # blinks the segments if in 2-segment mode.
@@ -23,6 +25,8 @@ class SegmentController(threading.Thread):
         # Initial set to the right digit.
         GPIO.output(left_dig_tran, GPIO.LOW)
         GPIO.output(right_dig_tran, GPIO.HIGH)
+        # Counter for determining if the queue should be checked.
+        self.cnt = COUNTER
 
     # Cleanup the GPIO and shut off the displays on delete.
     def __del__(self):
@@ -34,8 +38,10 @@ class SegmentController(threading.Thread):
         while not self.shut.is_set():
             # Wait a little bit before checking the queue.
             sleep(0.005)
-            # If there is something in the queue, update displays.
-            if not self.q.empty():
+            # If ready to check queue and there is something in the queue, update displays.
+            if self.cnt == 0 and not self.q.empty():
+                # Reset counter.
+                self.cnt = COUNTER
                 # Get dictionary of updated values.
                 val_dict = self.q.get()
                 for key, val in val_dict.items():
@@ -67,6 +73,8 @@ class SegmentController(threading.Thread):
             # If not in single digit mode, blink both digits on each display.
             elif not self.single_mode:
                 self.refresh.updateDouble()
+            # Decrement the counter.
+            self.cnt -= 1
 
     # Checks current display numbers to determine whether to be in single mode or not.
     def checkMode(self):
