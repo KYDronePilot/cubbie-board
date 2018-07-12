@@ -32,8 +32,8 @@ class SegmentController(threading.Thread):
     # Actual thread that is run.
     def run(self):
         while not self.shut.is_set():
-            # Wait a quarter second before checking the queue. Decreases CPU usage by 80%.
-            sleep(0.25)
+            # Wait a little bit before checking the queue.
+            sleep(0.01)
             # If there is something in the queue, update displays.
             if not self.q.empty():
                 # Get dictionary of updated values.
