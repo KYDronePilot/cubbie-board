@@ -129,8 +129,6 @@ class CubbieBoardDaemon(daemon.Daemon):
 
     # Main loop, manages everything.
     def run(self):
-        # Test to see if debug arg in daemon actually works.
-        raise ValueError('Exception test')
         # Run all initialization tasks.
         self.init()
         # Run till control var says to stop.
