@@ -36,45 +36,52 @@ class SegmentController(threading.Thread):
     # Actual thread that is run.
     def run(self):
         while not self.shut.is_set():
-            # Wait a little bit before checking the queue.
+            # Wait a little bit before checking the counter.
             sleep(0.005)
-            # If ready to check queue and there is something in the queue, update displays.
-            if self.cnt == 0 and not self.q.empty():
-                # Reset counter.
-                self.cnt = COUNTER
-                # Get dictionary of updated values.
-                val_dict = self.q.get()
-                for key, val in val_dict.items():
-                    # Update display objects if name and val in the dict.
-                    if key == 'home_team_runs':
-                        self.refresh.home.updateCache(val)
-                    elif key == 'away_team_runs':
-                        self.refresh.away.updateCache(val)
-                    elif key == 'inning':
-                        self.refresh.inning.updateCache(val)
-                    elif key == 'inning_state':
-                        # Home display's extra IO pin represents top, away's represents bottom.
-                        if val == 'Top':
-                            self.refresh.home.extra_pin_on = True
-                            self.refresh.away.extra_pin_on = False
-                        elif val == 'Bottom':
-                            self.refresh.home.extra_pin_on = False
-                            self.refresh.away.extra_pin_on = True
-                    # Shut off all displays.
-                    elif key == 'off':
-                        self.refresh.off()
-                # After updating the values, set to the correct segment mode.
-                self.checkMode()
-                # Depending on the mode, update the display accordingly.
-                if self.single_mode:
-                    self.refresh.updateSingle()
-                else:
-                    self.refresh.updateDouble()
+            # Call cache updater method if counter has reached 0.
+            if self.cnt == 0:
+                self.update_cache()
             # If not in single digit mode, blink both digits on each display.
             elif not self.single_mode:
                 self.refresh.updateDouble()
             # Decrement the counter.
             self.cnt -= 1
+
+    # Update the segment display caches if there is something in the queue.
+    def update_cache(self):
+        # Exit if the queue is empty.
+        if self.q.empty():
+            return
+        # Reset counter.
+        self.cnt = COUNTER
+        # Get dictionary of updated values.
+        val_dict = self.q.get()
+        for key, val in val_dict.items():
+            # Update display objects if name and val in the dict.
+            if key == 'home_team_runs':
+                self.refresh.home.updateCache(val)
+            elif key == 'away_team_runs':
+                self.refresh.away.updateCache(val)
+            elif key == 'inning':
+                self.refresh.inning.updateCache(val)
+            elif key == 'inning_state':
+                # Home display's extra IO pin represents top, away's represents bottom.
+                if val == 'Top':
+                    self.refresh.home.extra_pin_on = True
+                    self.refresh.away.extra_pin_on = False
+                elif val == 'Bottom':
+                    self.refresh.home.extra_pin_on = False
+                    self.refresh.away.extra_pin_on = True
+            # Shut off all displays.
+            elif key == 'off':
+                self.refresh.off()
+        # After updating the values, set to the correct segment mode.
+        self.checkMode()
+        # Depending on the mode, update the display accordingly.
+        if self.single_mode:
+            self.refresh.updateSingle()
+        else:
+            self.refresh.updateDouble()
 
     # Checks current display numbers to determine whether to be in single mode or not.
     def checkMode(self):
