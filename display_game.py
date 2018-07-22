@@ -1,5 +1,6 @@
 from os.path import isfile
 from time import sleep
+from urllib2 import URLError
 
 import pigpio
 
@@ -151,8 +152,12 @@ class CubbieBoardDaemon(daemon.Daemon):
             # If this is the first time through or a new game is to be displayed, reset this class's game object.
             if self.game is None or game.game_id != self.game.game_id:
                 self.game = game
-            # Update the scoreboard and get changes.
-            changes = self.sb.update(game.game_id)
+            # Try to update the scoreboard and get changes.
+            try:
+                changes = self.sb.update(game.game_id)
+            # If there is an error getting the scoreboard, continue to next game.
+            except URLError:
+                continue
             # If a new game or status change, update the LCD displays.
             if 'new_game' in changes or 'status' in changes:
                 self.updateLCD()

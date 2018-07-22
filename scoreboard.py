@@ -20,12 +20,8 @@ class Scoreboard:
         # If no game_id specified, raise an error.
         if self.game_id is None:
             raise ValueError('No game_id specified for scoreboard instance')
-        # Try to get a new overview object.
-        try:
-            stats = overview(self.game_id)
-        except ValueError:
-            # TODO take steps to try and get the game that should be played right now.
-            pass
+        # Get a new overview object and return it.
+        stats = overview(self.game_id)
         return stats
 
     # For getting updates on the current score, inning, and game status for a game_id.

@@ -1,6 +1,7 @@
 # For managing a list of active games that can be scrolled through on the display.
 import mlbgame
 from Queue import Queue
+from urllib2 import URLError
 
 from datetime import datetime, timedelta
 import pytz
@@ -61,9 +62,13 @@ class ActiveGames:
             # If game already determined to be past 15 after final, disregard.
             if game.game_id in self.old_finals:
                 continue
-            # Get the scoreboard.
-            self.sb.game_id = game.game_id
-            sb = self.sb.refreshOverview()
+            # Try to get a scoreboard object.
+            try:
+                self.sb.game_id = game.game_id
+                sb = self.sb.refreshOverview()
+            # If there is an error getting the scoreboard, continue to next game.
+            except URLError:
+                continue
             # Get starting ET date time with AM or PM attached to the end.
             start_time = "{0} {1}".format(sb.time_date, sb.ampm)
             # Get time elapsed since game begun.
