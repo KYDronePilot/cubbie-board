@@ -37,7 +37,7 @@ class SegmentController(threading.Thread):
     def run(self):
         while not self.shut.is_set():
             # Wait a little bit before checking the counter.
-            sleep(0.005)
+            sleep(0.002)
             # Call cache updater method if counter has reached 0.
             if self.cnt == 0:
                 self.update_cache()
