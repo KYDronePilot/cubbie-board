@@ -49,11 +49,11 @@ class SegmentController(threading.Thread):
 
     # Update the segment display caches if there is something in the queue.
     def update_cache(self):
+        # Reset counter.
+        self.cnt = COUNTER
         # Exit if the queue is empty.
         if self.q.empty():
             return
-        # Reset counter.
-        self.cnt = COUNTER
         # Get dictionary of updated values.
         val_dict = self.q.get()
         for key, val in val_dict.items():
