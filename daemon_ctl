@@ -7,7 +7,7 @@ import sys
 USAGE = "Usage: daemon_ctl {start|stop|restart}"
 
 # Create a daemon control object.
-daemon = display_game.CubbieBoardDaemon('/tmp/cubbie-board.pid')
+daemon = display_game.CubbieBoardDaemon('/tmp/cubbie-board.pid', stdout='debug/stdout.txt', stderr='debug/stderr.txt')
 
 # If 1 arg, process it.
 if len(sys.argv) == 2:
