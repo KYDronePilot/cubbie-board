@@ -30,6 +30,7 @@ class ActiveGames:
         return utc_now.astimezone(pytz.timezone(ET_TZ))
 
     # Fill queue with active games when called. If preferred team is playing, only put in that game.
+    # TODO if there are no active games for the day, check the previous day (for games that go late into the night).
     def refill(self):
         # Clear the queue safely.
         with self.q.mutex:
