@@ -12,6 +12,23 @@ from scoreboard import Scoreboard
 ET_TZ = 'US/Eastern'
 
 
+# Convert list of hours and minutes in str type to tuple of hours and minutes in int type.
+def hours_minutes_convert(time):
+    """
+
+    :type time: list
+    """
+    # Get hours and minutes from the time list.
+    hours, minutes = time
+    # If either is an empty string, treat as a 0.
+    if not hours:
+        hours = 0
+    if not minutes:
+        minutes = 0
+    # Return hours and minutes, casted to int.
+    return int(hours), int(minutes)
+
+
 # Maintain a list of active games.
 class ActiveGames:
     def __init__(self, pref_team):
@@ -88,23 +105,25 @@ class ActiveGames:
                 # Future potential help: throw exception if more than one parentheses pair.
                 if len(delay_time) > 1:
                     raise ValueError('More than one parentheses pair in elapsed time: {0}'.format(sb.elapsed_time))
-                # Chop off the ' delay' part and retrieve the hours and minutes.
-                delay_hours, delay_minutes = delay_time[0][:-6].split(':')
-                # Get the actual duration hours and minutes from the beginning of the string.
-                dur_hours, dur_minutes = re.findall('.*?(?= \()', sb.elapsed_time)[0].split(':')
-                # Add up minutes from both times after converting to int type.
-                minutes = int(delay_minutes) + int(dur_minutes)
-                # Add up hours the same way, plus any whole hours in the minutes var.
-                hours = int(delay_hours) + int(dur_hours) + (minutes / 60)
+                # Chop off the ' delay' part and retrieve the hours and minutes as a list.
+                delay_time = delay_time[0][:-6].split(':')
+                # Get the actual duration hours and minutes from the beginning of the string as a list.
+                dur_time = re.findall('.*?(?= \()', sb.elapsed_time)[0].split(':')
+                # Convert both delay and durations times to int type hours and minutes.
+                delay_hours, delay_minutes = hours_minutes_convert(delay_time)
+                dur_hours, dur_minutes = hours_minutes_convert(dur_time)
+                # Add up minutes from both times.
+                minutes = delay_minutes + dur_minutes
+                # Add up hours plus any whole hours in the minutes var.
+                hours = delay_hours + dur_hours + (minutes / 60)
                 # Get remaining minutes after taking out any whole hours.
                 minutes %= 60
             # If no delay in game, extra hours and minutes here.
             else:
-                # Retrieve hours and minutes of elapsed time in string form.
-                hours, minutes = sb.elapsed_time.split(':')
-                # Convert both to int type.
-                hours = int(hours)
-                minutes = int(minutes)
+                # Retrieve hours and minutes of elapsed time in list form.
+                time = sb.elapsed_time.split(':')
+                # Convert hours and minutes to int type.
+                hours, minutes = hours_minutes_convert(time)
             # Finally, get the ending time of the game after converting hour and min to int.
             end_time = start + timedelta(hours=hours, minutes=minutes)
             # Get timedelta between now and when the game ended.
