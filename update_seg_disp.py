@@ -27,6 +27,8 @@ class SegmentController(threading.Thread):
         GPIO.output(right_dig_tran, GPIO.HIGH)
         # Counter for determining if the queue should be checked.
         self.cnt = COUNTER
+        # For keeping track of whether the display should be on or off.
+        self.on = False
 
     # Cleanup the GPIO and shut off the displays on delete.
     def __del__(self):
@@ -41,8 +43,8 @@ class SegmentController(threading.Thread):
             # Call cache updater method if counter has reached 0.
             if self.cnt == 0:
                 self.update_cache()
-            # If not in single digit mode, blink both digits on each display.
-            elif not self.single_mode:
+            # If not in single digit mode and displays are on, blink both digits on each display.
+            elif not self.single_mode and self.on:
                 self.refresh.updateDouble()
             # Decrement the counter.
             self.cnt -= 1
@@ -54,6 +56,8 @@ class SegmentController(threading.Thread):
         # Exit if the queue is empty.
         if self.q.empty():
             return
+        # Initially set that the displays will be on.
+        self.on = True
         # Get dictionary of updated values.
         val_dict = self.q.get()
         for key, val in val_dict.items():
@@ -75,13 +79,18 @@ class SegmentController(threading.Thread):
             # Shut off all displays.
             elif key == 'off':
                 self.refresh.off()
+                # Set that the displays are off.
+                self.on = False
         # After updating the values, set to the correct segment mode.
         self.checkMode()
-        # Depending on the mode, update the display accordingly.
-        if self.single_mode:
-            self.refresh.updateSingle()
-        else:
-            self.refresh.updateDouble()
+        # Only run an update method if the displays are on.
+        if self.on:
+            # Update the display using single mode.
+            if self.single_mode:
+                self.refresh.updateSingle()
+            # Update the display using double mode.
+            else:
+                self.refresh.updateDouble()
 
     # Checks current display numbers to determine whether to be in single mode or not.
     def checkMode(self):
