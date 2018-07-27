@@ -3,6 +3,7 @@ import mlbgame
 import re
 from Queue import Queue
 from urllib2 import URLError
+from time import sleep
 
 from datetime import datetime, timedelta
 import pytz
@@ -54,8 +55,16 @@ class ActiveGames:
             self.q.queue.clear()
         # Grab the current time.
         now = self.now()
-        # Get all games for this day.
-        games = mlbgame.day(now.year, now.month, now.day)
+        # Try to get all games for this day.
+        while True:
+            try:
+                games = mlbgame.day(now.year, now.month, now.day)
+                break
+            # If mlbgame fails to pull the games, wait a little bit and try again.
+            except URLError:
+                sleep(10)
+                # DEBUG.
+                print('Failed to pull games for the day, trying again...')
         # Grab active games.
         active_games = [game for game in games if game.game_status == 'IN_PROGRESS']
         # Get final games that are within 15 minutes of ending and attach to the end of active games.
