@@ -156,7 +156,7 @@ class CubbieBoardDaemon(daemon.Daemon):
             try:
                 changes = self.sb.update(game.game_id)
             # If there is an error getting the scoreboard, continue to next game.
-            except URLError:
+            except (URLError, ValueError):
                 continue
             # If a new game or status change, update the LCD displays.
             if 'new_game' in changes or 'status' in changes:

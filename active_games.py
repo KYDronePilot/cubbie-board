@@ -95,7 +95,7 @@ class ActiveGames:
                 self.sb.game_id = game.game_id
                 sb = self.sb.refreshOverview()
             # If there is an error getting the scoreboard, continue to next game.
-            except URLError:
+            except (URLError, ValueError):
                 continue
             # If the elapsed_time field is empty, consider game over and append to list of old finals.
             if not sb.elapsed_time:
