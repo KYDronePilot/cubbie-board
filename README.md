@@ -1,4 +1,4 @@
-#Cubbie Board
+# Cubbie Board
 
 ![alt text](img/scoreboard_images/IMG_8290.JPG "Cubbie Board Face")
 
@@ -6,29 +6,29 @@ The Cubbie Board is an IOT, Chicago Cubs-themed baseball scoreboard. Powered by 
 this scoreboard will display your team-of-choice's game when live and cycle through other live MLB games otherwise.
 
 
-##Parts List
+## Parts List
 
-####Raspberry Pi Zero W
+#### Raspberry Pi Zero W
 The brains of the Cubbie Board lie in a Raspberry Pi Zero W. For simplicity sake, the [CanaKit 16GB Starter Kit](http://a.co/6ZoiTxW)
 is a great all-in-one kit that should have everything needed to get the Pi up and running for this project.
 
-####LCD Displays
+#### LCD Displays
 For the LCD displays, 2 [Adafruit 1.44" Color TFT LCD Display with MicroSD Card breakout - ST7735R](https://www.adafruit.com/product/2088)
 were used. There are cheaper ST7735R displays that can be found on eBay to lower the final price of the project.
 
-####7-Segment Displays
+#### 7-Segment Displays
 For the 7-segment displays a package of [10, 2 bit, 0.5 inch, cathode displays](http://r.ebay.com/P8kGMW) were 
 sourced from eBay. This is by far the cheapest option available.
 
-####7-Segment Controllers
+#### 7-Segment Controllers
 For controlling which segments are illuminated on the 7-segment displays, 3 [MCP23008 i2c IO expanders](https://www.adafruit.com/product/593)
 from Adafruit are used. There are probably cheaper ways of sourcing these chips, given a few months for shipping.
 
-####PCB Prototyping Board
+#### PCB Prototyping Board
 Rather than custom designing PCB boards for this project, a pack of [10, 12 x 18 cm prototyping boards](http://r.ebay.com/NOUrGX)
 were used. If anyone interested in this project would like to help design a custom PCB, please contact me.
 
-####Miscellaneous
+#### Miscellaneous
 * Red and Yellow Inning-State LEDs
 * 2 P2N2222A NPN Transistors
 * 24 [470 Ohm Resistors](http://r.ebay.com/Jjf0el)
@@ -42,22 +42,22 @@ were used. If anyone interested in this project would like to help design a cust
 
 
 
-##Hardware Configuration
+## Hardware Configuration
 This is a brief overview of how everything works. If you would like to build this project, please contact me and I 
 can make schematics.
 
-####Raspberry Pi
+#### Raspberry Pi
 All wiring that needs to connect to the Pi runs to the header pins (of which this build has way too many). From there,
 male to female jumpers connect the headers to the Pi.
 
 To make life easier, a female 40-pin header was soldered to the Pi's GPIO rather than using a male header or soldering
 each individual wire.
 
-####LCD Displays
+#### LCD Displays
 The LCD displays must be controlled through an SPI interface. So the Power, Clock, Slave In, and Data Command pins are
 shared between both displays. Each display has its own separate Slave Select, Reset, and Lite (PWM backlight) pins.
 
-####7-Segment Displays
+#### 7-Segment Displays
 Each dual 7-segment display has common anode pins for each segment and 2 separate, common-cathode pins for each digit.
 Each segment of each display (minus the dot 'DP' segment) is connected to one of the MCP23008 IO pins via a 
 current-limiting 470 ohm resistor. The 8th pin on the right and left MCP23008 expanders is used to power the top and 
@@ -71,14 +71,14 @@ section for info on double digit mode).
 
 
 
-##Software Configuration
+## Software Configuration
 Once again this is a brief overview of how the code works. For more information, I would recommend reading the inline
 comments, as each piece of code is explained there.
 
-####MLBGame API
+#### MLBGame API
 All information regarding teams playing and live stats is sourced using the mlbgame Python API created by Panzarino.
 
-####7-Segment Displays
+#### 7-Segment Displays
 Each MCP23008 chip has a low level class that:
 * Sets up the chip on init
 * Holds the numbers to be displayed on each digit of the segment display
