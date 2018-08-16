@@ -92,5 +92,53 @@ The controller thread also manages the segment displays' "Double Digit Mode." Wh
  is > 9, the controller kicks into Double Digit Mode, blinking the right and left digits on each display on every 
  loop of the main run method.
  
- To make executing mass changes on the segment displays more organized, the direct changes/updates are handled by a
+To make executing mass changes on the segment displays more organized, the direct changes/updates are handled by a
  Refresh class.
+
+#### LCD Displays
+Each LCD display has a custom low-level abstraction class for writing images. The main external library for interacting 
+with the ST7735 Adafruit displays is a fork of a fork of the [Adafruit Python ILI9341](https://github.com/adafruit/Adafruit_Python_ILI9341)
+library. The original fork adapted the library to work with ST7735 displays, but due to an odd image memory buffer
+issue specifically with the Adafruit display, I made another fork, used by this program.
+
+##### Backlight PWM
+Since the Pi already has two hardware PWM channels and both the LCD displays' backlights can be PWM'd, each LCD 
+display object has an attribute for a PWM thread, which is started on creation of the display object. This thread 
+uses the PiGPIO daemon and python package to control the backlight brightness.
+
+The intended purpose for the PWM thread was to be able to pulse the brightness, signifying a winner. To accomplish 
+this, the thread periodically checks a queue for a tuple of the lowest and highest brightness settings and whether it
+should change to the brightness immediately (if highest and lowest are same). For just adjusting the brightness 
+without pulsing, both limits are set to the same value.
+ 
+##### Controller Class
+For simple managing of both displays, there is a controller class, with methods for:
+* Shutting off the displays
+* Getting and displaying team logos and other images
+* Adding a text banner to a team's logo to show the winner
+    * Or displaying the 'W' if the Cubs win
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
