@@ -2,10 +2,10 @@ import signal
 from os.path import isfile
 from time import sleep
 from urllib2 import URLError
+from py_daemon.py_daemon import Daemon
 
 import pigpio
 
-import daemon
 from cubbie_board.core.active_games import ActiveGames
 from cubbie_board.core.scoreboard import Scoreboard
 from cubbie_board.lcd_display.lcd_controller import LcdController
@@ -26,7 +26,7 @@ PREFERRED_TEAM = 'Cubs'
 
 
 # Main daemon that drives everything.
-class CubbieBoardDaemon(daemon.Daemon):
+class CubbieBoardDaemon(Daemon):
     sb = None  # type: Scoreboard
     active_games = None  # type: ActiveGames
     lcd_ctl = None  # type: LcdController
@@ -34,7 +34,7 @@ class CubbieBoardDaemon(daemon.Daemon):
 
     # Define all vars here, but don't initialize any of them.
     def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-        daemon.Daemon.__init__(self, pidfile, stdin=stdin, stdout=stdout, stderr=stderr)
+        Daemon.__init__(self, pidfile, stdin=stdin, stdout=stdout, stderr=stderr)
         # Pigpio daemon control object.
         self.gpio = None
         # Home and away LCD objects.
@@ -99,27 +99,6 @@ class CubbieBoardDaemon(daemon.Daemon):
         # Set the display status var to off.
         self.displays_on = False
 
-    # For determining if the daemon should still be running.
-    @staticmethod
-    def running():
-        # If daemon status file exists, return True, else False.
-        return isfile(daemon.DAEMON_STATUS_DIR + 'running')
-
-    # Special sleep function, checks daemon control var at 1 second intervals.
-    def sleep(self, secs):
-        """
-
-        :type secs: int
-        """
-        # Use passed secs var as a counter.
-        while secs > 0:
-            # If daemon needs to stop, return here.
-            if not self.running():
-                return
-            secs -= 1
-            # Wait a sec...
-            sleep(1)
-
     # Update the LCD displays.
     def updateLCD(self):
         # Extra kwargs to pass to display function.
@@ -155,7 +134,7 @@ class CubbieBoardDaemon(daemon.Daemon):
                     if self.displays_on:
                         self.off()
                     # Wait 10 minutes before checking again for games.
-                    self.sleep(600)
+                    sleep(600)
                     continue
             # There is a live game if the execution reaches here.
             # Get a game from the queue and see if that game is already being displayed.
@@ -175,4 +154,4 @@ class CubbieBoardDaemon(daemon.Daemon):
             # Update the segment displays.
             self.segment_ctl.q.put(changes, block=False)
             # Wait before refreshing or moving to the next game.
-            self.sleep(10)
+            sleep(10)

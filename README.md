@@ -118,8 +118,22 @@ For simple managing of both displays, there is a controller class, with methods 
 * Adding a text banner to a team's logo to show the winner
     * Or displaying the 'W' if the Cubs win
 
+#### Core Data Processing
 
+##### mlbgame API
+For accessing live MLB stats and information about teams playing, the mlbgame Python API by Panzarino is used. 
 
+##### Active/Final Game Retrieval
+To keep track of what games are active and which ones have recently ended, there is an active games class. The class 
+maintains a queue of games that should be displayed. These games include active games and games that are within 15 
+minutes of ending. If the user specified 'Preferred Team' is one of the games about to be added to the queue, all 
+other games are disregarded and just the preferred team's games is added.
+
+##### Handling Live Stats
+For accessing and updating live stats (such as game status, run counts, and inning info) there is a custom scoreboard
+class. The class has maintains attributes for each live stat. When the update method is called, it compares the new 
+values with the old ones, adding any changes to a dict and returning it. This information is what the segment display 
+thread uses to obtain and display changes. The class can also determine the winner of a game if necessary.
 
 
 
