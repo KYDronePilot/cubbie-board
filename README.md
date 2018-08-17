@@ -164,6 +164,9 @@ This program has only been tested and run on Python 2.7.
 
 
 ## Do it Yourself
+
+![alt text](img/scoreboard_images/pcb_and_pi_rear_in_case.JPG "Cubbie Board PCB Back")
+
 If you are intrigued by this project and have questions about building it yourself, please get in touch. The 
 project isn't perfect and I'm sure there will be some unexpected bugs associated when setting up a new board, both 
 with hardware and software. This project took me a considerable amount of time to complete, but I'm sure other more 
