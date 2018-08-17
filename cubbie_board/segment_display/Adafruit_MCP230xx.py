@@ -21,8 +21,6 @@
 # SOFTWARE.
 
 from Adafruit_I2C import Adafruit_I2C
-import smbus
-import time
 
 MCP23017_IODIRA = 0x00
 MCP23017_IODIRB = 0x01

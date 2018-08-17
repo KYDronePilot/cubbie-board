@@ -6,7 +6,7 @@ from time import sleep
 
 import RPi.GPIO as GPIO
 
-from cubbie_board.segment_display.segment_display import MCP23008
+from segment_display import MCP23008
 
 # Number of iterations before checking the queue.
 COUNTER = 100

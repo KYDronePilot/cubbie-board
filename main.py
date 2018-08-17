@@ -1,5 +1,4 @@
 import signal
-from os.path import isfile
 from time import sleep
 from urllib2 import URLError
 from py_daemon.py_daemon import Daemon

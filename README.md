@@ -1,12 +1,14 @@
 # Cubbie Board
 
-![alt text](img/scoreboard_images/IMG_8290.JPG "Cubbie Board Face")
+![alt text](img/scoreboard_images/board_face_2.JPG "Cubbie Board Face")
 
 The Cubbie Board is an IOT, Chicago Cubs-themed baseball scoreboard. Powered by a Raspberry Pi Zero W and Python code,
 this scoreboard will display your team-of-choice's game when live and cycle through other live MLB games otherwise.
 
 
 ## Parts List
+
+![alt text](img/scoreboard_images/pcb_face_2.JPG "Cubbie Board PCB Face")
 
 #### Raspberry Pi Zero W
 The brains of the Cubbie Board lie in a Raspberry Pi Zero W. For simplicity sake, the [CanaKit 16GB Starter Kit](http://a.co/6ZoiTxW)
@@ -43,6 +45,9 @@ were used. If anyone interested in this project would like to help design a cust
 
 
 ## Hardware Configuration
+
+![alt text](img/scoreboard_images/pcb_and_pi_face_1.JPG "Cubbie Board and Raspberry Pi")
+
 This is a brief overview of how everything works. If you would like to build this project, please contact me and I 
 can make schematics.
 
@@ -135,9 +140,34 @@ class. The class has maintains attributes for each live stat. When the update me
 values with the old ones, adding any changes to a dict and returning it. This information is what the segment display 
 thread uses to obtain and display changes. The class can also determine the winner of a game if necessary.
 
+##### Daemon Control
+To allow the scoreboard to run in the background at all times, it was necessary to implement a daemon. The daemon 
+implementation uses the [py_daemon](https://github.com/serverdensity/python-daemon) package, an adaptation by 
+serverdensity. The main section of code inherits this daemon class, overriding the run method with an infinite loop 
+handling all the functions of the scoreboard.
 
 
+## Dependencies
+The list below contains what is assumed to be all of the required dependencies. If any more are discovered on the 
+way, this list will be updated.
 
+This program has only been tested and run on Python 2.7.
+
+* [mlbgame](http://panz.io/mlbgame/)
+* pytz
+* [Pillow](https://python-pillow.org)
+* Adafruit_GPIO (available on PyPI)
+* RPi.GPIO (also available on PyPI)
+* [This fork](https://github.com/KYDronePilot/Adafruit_ST7735r) of the Python ST7735r library
+* [PiGPIO](http://abyz.me.uk/rpi/pigpio/)
+* [python-daemon](https://github.com/serverdensity/python-daemon) (py_daemon on PyPI)
+
+
+## Do it Yourself
+If you are intrigued by this project and have questions about building it yourself, please get in touch. The 
+project isn't perfect and I'm sure there will be some unexpected bugs associated when setting up a new board, both 
+with hardware and software. This project took me a considerable amount of time to complete, but I'm sure other more 
+experienced people would not have the same problems.
 
 
 
