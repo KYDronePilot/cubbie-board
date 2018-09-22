@@ -87,7 +87,7 @@ class LcdController:
             # If a winner is specified, alter their team logo accordingly.
             if key == 'winner':
                 # Update the logo of the winning team.
-                exec ("{0}_logo = self.renderWinner('{1}', {0}_logo)".format(val[0], val[1]))
+                exec ("{0}_logo = self.render_winner_label('{1}', {0}_logo)".format(val[0], val[1]))
         # Display the images.
         self.display_image('home', home_logo)
         self.display_image('away', away_logo)
