@@ -2,6 +2,7 @@ import signal
 from time import sleep
 from urllib2 import URLError
 from py_daemon.py_daemon import Daemon
+from lxml.etree import XMLSyntaxError
 
 import pigpio
 
@@ -145,7 +146,7 @@ class CubbieBoardDaemon(Daemon):
             try:
                 changes = self.sb.update(game.game_id)
             # If there is an error getting the scoreboard, continue to next game.
-            except (URLError, ValueError):
+            except (URLError, ValueError, XMLSyntaxError):
                 continue
             # If a new game or status change, update the LCD displays.
             if 'new_game' in changes or 'status' in changes:
@@ -154,3 +155,8 @@ class CubbieBoardDaemon(Daemon):
             self.segment_ctl.q.put(changes, block=False)
             # Wait before refreshing or moving to the next game.
             sleep(10)
+
+
+if __name__ == '__main__':
+    daemon = CubbieBoardDaemon('/tmp/cubbie-board.pid', stdout='debug/stdout.txt', stderr='debug/stderr.txt')
+    daemon.run()

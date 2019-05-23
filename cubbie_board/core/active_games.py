@@ -4,6 +4,7 @@ from Queue import Queue
 from datetime import datetime, timedelta
 from time import sleep
 from urllib2 import URLError
+from lxml.etree import XMLSyntaxError
 
 import mlbgame
 import pytz
@@ -97,7 +98,7 @@ class ActiveGames:
                 self.sb.game_id = game.game_id
                 sb = self.sb.refresh_overview()
             # If there is an error getting the scoreboard, continue to next game.
-            except (URLError, ValueError):
+            except (URLError, ValueError, XMLSyntaxError):
                 continue
             # If the elapsed_time field is empty, consider game over and append to list of old finals.
             if not sb.elapsed_time:
