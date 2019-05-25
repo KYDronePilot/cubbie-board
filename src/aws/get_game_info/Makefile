@@ -1,13 +1,14 @@
-PROJECT = get_mlb_data
+PROJECT = get_game_info
 VIRTUAL_ENV = env
-FUNCTION_NAME = getMLBData
+FUNCTION_NAME = getGameInfo
 AWS_REGION = us-east-1
-FUNCTION_HANDLER = get_mlb_games
+FUNCTION_HANDLER = lambda_handler
 LAMBDA_ROLE = arn:aws:iam::024919965614:role/service-role/lambda-basic-role
 
 # Default commands
 install: virtual
 build: clean_package build_package_temp copy_python remove_unused zip
+build_deploy: build lambda_delete lambda_create
 
 
 virtual:
