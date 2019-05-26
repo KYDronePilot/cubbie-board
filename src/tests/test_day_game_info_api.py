@@ -1,10 +1,11 @@
 from unittest import TestCase
 
-from ..day_game_info_api import DayGameInfoAPI
 from decouple import config
 
+from ..day_game_info_api import DayGameInfoAPI
+
 # API URL and key.
-API_URL = config('API_URL')
+API_URL = config('DAY_GAME_INFO_API_URL')
 API_KEY = config('API_KEY')
 
 

@@ -46,7 +46,11 @@ class GameInfoFetcher(threading.Thread):
             'inning': overview.inning,
             'inning_state': overview.inning_state,
             'home_team_runs': overview.home_team_runs,
-            'away_team_runs': overview.away_team_runs
+            'away_team_runs': overview.away_team_runs,
+            'home_team_name': overview.home_team_name,
+            'away_team_name': overview.away_team_name,
+            'time_date': overview.time_date,
+            'ampm': overview.ampm
         }
 
     def run(self) -> None:
