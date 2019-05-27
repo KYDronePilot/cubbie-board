@@ -31,3 +31,105 @@ class TestGameOverview(TestCase):
         # Try zero padded hours.
         date = GameOverview._process_time('2019/05/24 02:08', 'pm')
         self.assertEqual(14, date.hour)
+
+    def test_is_active(self):
+        """
+        Test if it can determine whether a game is active.
+
+        """
+        # Should be active.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'In Progress',
+            10,
+            'Top',
+            3,
+            3,
+            'Cardinals',
+            'Braves',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertTrue(info.is_active())
+        # Should be false.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'Final',
+            10,
+            'Top',
+            3,
+            3,
+            'Cardinals',
+            'Braves',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertFalse(info.is_active())
+
+    def test_is_final(self):
+        """
+        Test if it can determine whether a game is over.
+
+        """
+        # Should be final.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'Final',
+            10,
+            'Top',
+            3,
+            3,
+            'Cardinals',
+            'Braves',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertTrue(info.is_final())
+        # Should be false.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'In Progress',
+            10,
+            'Top',
+            3,
+            3,
+            'Cardinals',
+            'Braves',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertFalse(info.is_final())
+
+    def test_is_pre_game(self):
+        """
+        Test if it can determine whether a game is in warm-up.
+
+        """
+        # Should be warm-up.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'Warmup',
+            10,
+            'Top',
+            3,
+            3,
+            'Cardinals',
+            'Braves',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertTrue(info.is_warm_up())
+        # Should be false.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'In Progress',
+            10,
+            'Top',
+            3,
+            3,
+            'Cardinals',
+            'Braves',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertFalse(info.is_warm_up())

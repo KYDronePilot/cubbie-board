@@ -4,6 +4,7 @@ For holding overview info about a game.
 """
 
 from datetime import datetime
+from typing import ClassVar
 
 
 class GameOverview(object):
@@ -22,6 +23,11 @@ class GameOverview(object):
         start_time (datetime): Start time of the game
 
     """
+
+    # Game status constants.
+    WARM_UP_STATUS = 'Warmup'  # type: ClassVar[str]
+    IN_PROGRESS_STATUS = 'In Progress'  # type: ClassVar[str]
+    FINAL_STATUS = 'Final'  # type: ClassVar[str]
 
     def __init__(
             self,
@@ -79,3 +85,36 @@ class GameOverview(object):
         """
         # Extract time.
         return datetime.strptime(time_date + ' ' + ampm, '%Y/%m/%d %I:%M %p')
+
+    def is_active(self):
+        # type: () -> bool
+        """
+        Checks if the game is active.
+
+        Returns:
+            bool: Whether or not the game is active
+
+        """
+        return self.status == GameOverview.IN_PROGRESS_STATUS
+
+    def is_final(self):
+        # type: () -> bool
+        """
+        Checks if the game is over.
+
+        Returns:
+            bool: Whether or not the game is over
+
+        """
+        return self.status == GameOverview.FINAL_STATUS
+
+    def is_warm_up(self):
+        # type: () -> bool
+        """
+        Checks if game is in warm-up.
+
+        Returns:
+            bool: Whether or not the game is in warm-up
+
+        """
+        return self.status == GameOverview.WARM_UP_STATUS
