@@ -133,3 +133,37 @@ class TestGameOverview(TestCase):
             'PM'
         )
         self.assertFalse(info.is_warm_up())
+
+    def test_is_playing(self):
+        """
+        Verify that the method can check if a specific team is playing.
+
+        """
+        # Cubs are playing.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'In Progress',
+            10,
+            'Top',
+            3,
+            3,
+            'Cubs',
+            'Indians',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertTrue(info.is_playing('Cubs'))
+        # Cubs are not playing.
+        info = GameOverview(
+            '2019_05_26_atlmlb_slnmlb_1',
+            'In Progress',
+            10,
+            'Top',
+            3,
+            3,
+            'Rays',
+            'Indians',
+            '2019/05/26 7:05',
+            'PM'
+        )
+        self.assertFalse(info.is_playing('Cubs'))

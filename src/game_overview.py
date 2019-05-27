@@ -4,6 +4,7 @@ For holding overview info about a game.
 """
 
 from datetime import datetime
+
 from typing import ClassVar
 
 
@@ -118,3 +119,17 @@ class GameOverview(object):
 
         """
         return self.status == GameOverview.WARM_UP_STATUS
+
+    def is_playing(self, team):
+        # type: (str) -> bool
+        """
+        Whether a specific team is playing in this game.
+
+        Args:
+            team (str): Team to check
+
+        Returns:
+            bool: Whether or not the team is playing in this game
+
+        """
+        return team == self.home_team_name or team == self.away_team_name
