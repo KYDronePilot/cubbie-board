@@ -14,7 +14,8 @@ from .game_overview import GameOverview
 from .game_overview_api import GameOverviewAPI
 
 # API URL and key.
-API_URL = config('DAY_GAME_INFO_API_URL')
+DAY_GAME_INFO_API_URL = config('DAY_GAME_INFO_API_URL')
+GAME_OVERVIEW_API_URL = config('GAME_OVERVIEW_API_URL')
 API_KEY = config('API_KEY')
 
 
@@ -48,8 +49,8 @@ class GameManager(object):
         self.preferred_team = preferred_team  # type: str
         self.overviews = []  # type: List[GameOverview]
         # Set up APIs.
-        self.day_game_info_api = DayGameInfoAPI(API_URL, API_KEY)  # type: DayGameInfoAPI
-        self.game_overview_api = GameOverviewAPI(API_URL, API_KEY)  # type: GameOverviewAPI
+        self.day_game_info_api = DayGameInfoAPI(DAY_GAME_INFO_API_URL, API_KEY)  # type: DayGameInfoAPI
+        self.game_overview_api = GameOverviewAPI(GAME_OVERVIEW_API_URL, API_KEY)  # type: GameOverviewAPI
         # Get games for the current date.
         self.games = self.day_game_info_api.fetch_games(
             current_date.month,

@@ -48,9 +48,10 @@ class TestGameManager(TestCase):
         # Set Cubs game as active.
         cubs_i = self.manager._get_team_overview_i('Cubs')
         self.manager.overviews[cubs_i].status = self.manager.overviews[cubs_i].IN_PROGRESS_STATUS
-        # Change the score of another game.
+        # Change the score and status of another game.
         angels_i = self.manager._get_team_overview_i('Angels')
         self.manager.overviews[angels_i].home_team_runs = -1
+        self.manager.overviews[angels_i].status = self.manager.overviews[angels_i].IN_PROGRESS_STATUS
         # Refresh overviews.
         self.manager.refresh_overviews()
         # Cubs should be updated.
