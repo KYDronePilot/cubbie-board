@@ -4,4 +4,7 @@ python:
 install:
   - pip install -r requirements.txt
 script: python -m unittest discover -s src/tests -t .
-email: false
+notifications:
+  email:
+    on_failure: always
+    on_success: change
