@@ -1,6 +1,9 @@
 """
 For holding overview info about a game.
 
+Notes:
+    TODO: Add method for "is_scheduled".
+
 """
 
 from datetime import datetime
@@ -43,6 +46,7 @@ class GameOverview(object):
             time_date,
             ampm
     ):
+        # type: (str, str, int, str, int, int, str, str, str, str) -> None
         """
         Process api data and save to attributes.
 

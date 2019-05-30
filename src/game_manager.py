@@ -6,7 +6,8 @@ Module for managing games.
 from datetime import date
 
 from decouple import config
-from typing import List
+from typing import List, Union
+from Queue import Queue
 
 from .day_game_info import DayGameInfo
 from .day_game_info_api import DayGameInfoAPI
@@ -31,6 +32,7 @@ class GameManager(object):
         preferred_team (str): Name of user's preferred team
         day_game_info_api (DayGameInfoAPI): API for retrieving games on a day
         game_overview_api (GameOverviewAPI): API for retrieving overview of games
+        overview_queue (Queue): Queue of overviews to display next.
 
     """
 
@@ -47,6 +49,7 @@ class GameManager(object):
         # Set attributes.
         self.current_date = current_date  # type: date
         self.preferred_team = preferred_team  # type: str
+        self.overview_queue = Queue()  # type: Queue
         self.overviews = []  # type: List[GameOverview]
         # Set up APIs.
         self.day_game_info_api = DayGameInfoAPI(DAY_GAME_INFO_API_URL, API_KEY)  # type: DayGameInfoAPI
@@ -89,23 +92,49 @@ class GameManager(object):
         # Else, team not playing.
         return -1
 
-    def refresh_overviews(self):
-        # type: () -> None
+    def _refill_queue(self, pref_team_i=-1):
+        # type: (int) -> None
         """
-        Refresh each of the game overviews.
+        Refill the queue of games to display.
+
+        Args:
+            pref_team_i (int): Index of preferred team if active, -1 if not active.
 
         Returns:
             None
 
         """
+        # If active preferred team, just add it.
+        if pref_team_i != -1:
+            self.overview_queue.put(self.overviews[pref_team_i])
+        # Otherwise, refill with games that are active or final.
+        else:
+            for overview in (overview for overview in self.overviews if overview.is_active() or overview.is_final()):
+                self.overview_queue.put(overview)
+
+    def _update_overviews(self):
+        # type: () -> int
+        """
+        Update game overviews.
+
+        Notes:
+            If preferred team not active, update everything not final else, update just their game.
+
+        Returns:
+            int: Index of preferred team's game if active, -1 if not
+
+        """
+        # Whether the preferred team is actively playing.
+        pref_team_active = False
         # For determining which game overviews to update.
         do_update = [False] * len(self.overviews)
-        # Get overview index for preferred team if playing.
-        preferred_overview_i = self._get_team_overview_i(self.preferred_team)
+        # Get index for preferred team if playing.
+        pref_team_i = self._get_team_overview_i(self.preferred_team)
         # If not -1 and active, set as the only game to update.
-        if preferred_overview_i != -1 and self.overviews[preferred_overview_i].is_active():
-            do_update[preferred_overview_i] = True
-        # Else, set to update the games that are not over.
+        if pref_team_i != -1 and self.overviews[pref_team_i].is_active():
+            pref_team_active = True
+            do_update[pref_team_i] = True
+        # Else, set to update the games that are not final.
         else:
             for i in range(len(self.overviews)):
                 if not self.overviews[i].is_final():
@@ -120,3 +149,30 @@ class GameManager(object):
             if do_update[i]:
                 self.overviews[i] = new_overviews[new_i]
                 new_i += 1
+        # If preferred team active, return index.
+        if pref_team_active:
+            return pref_team_i
+        return -1
+
+    def refresh_overviews(self):
+        # type: () -> None
+        """
+        Refresh each of the game overviews.
+
+        Returns:
+            None
+
+        """
+        # TODO, put some stuff here...
+        # Refill the overview queue.
+        self._refill_queue(pref_team_i=preferred_overview_i if pref_team_active else -1)
+
+    def get_next_game(self):
+        # type: () -> Union[None, GameOverview]
+        """
+        Get overview of next game to display, refreshing if necessary.
+
+        Returns:
+            Union[None, GameOverview]: Next overview to display
+
+        """
