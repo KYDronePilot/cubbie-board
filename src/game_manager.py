@@ -92,26 +92,6 @@ class GameManager(object):
         # Else, team not playing.
         return -1
 
-    def _refill_queue(self, pref_team_i=-1):
-        # type: (int) -> None
-        """
-        Refill the queue of games to display.
-
-        Args:
-            pref_team_i (int): Index of preferred team if active, -1 if not active.
-
-        Returns:
-            None
-
-        """
-        # If active preferred team, just add it.
-        if pref_team_i != -1:
-            self.overview_queue.put(self.overviews[pref_team_i])
-        # Otherwise, refill with games that are active or final.
-        else:
-            for overview in (overview for overview in self.overviews if overview.is_active() or overview.is_final()):
-                self.overview_queue.put(overview)
-
     def _update_overviews(self):
         # type: () -> int
         """
@@ -154,18 +134,43 @@ class GameManager(object):
             return pref_team_i
         return -1
 
-    def refresh_overviews(self):
-        # type: () -> None
+    def _refill_queue(self, pref_team_i=-1):
+        # type: (int) -> None
         """
-        Refresh each of the game overviews.
+        Refill the queue of games to display.
+
+        Args:
+            pref_team_i (int): Index of preferred team if active, -1 if not active.
 
         Returns:
             None
 
         """
-        # TODO, put some stuff here...
-        # Refill the overview queue.
-        self._refill_queue(pref_team_i=preferred_overview_i if pref_team_active else -1)
+        # If active preferred team, just add it.
+        if pref_team_i != -1:
+            self.overview_queue.put(self.overviews[pref_team_i])
+        # Otherwise, refill with games that are active or final.
+        else:
+            for overview in self.overviews:
+                if overview.is_active() or overview.is_final():
+                    self.overview_queue.put(overview)
+
+    def refresh_overviews(self):
+        # type: () -> None
+        """
+        Update games and refill the game queue.
+
+        Notes:
+            If preferred team is active, only update and refill that game.
+
+        Returns:
+            None
+
+        """
+        # Update games, getting preferred team game index if active.
+        pref_team_i = self._update_overviews()
+        # Refill game queue.
+        self._refill_queue(pref_team_i=pref_team_i)
 
     def get_next_game(self):
         # type: () -> Union[None, GameOverview]
@@ -173,6 +178,14 @@ class GameManager(object):
         Get overview of next game to display, refreshing if necessary.
 
         Returns:
-            Union[None, GameOverview]: Next overview to display
+            Union[None, GameOverview]: Next overview to display if exists, None if not
 
         """
+        # If not empty, get next game.
+        if not self.overview_queue.empty():
+            return self.overview_queue.get()
+        # Else, refresh and try again.
+        self.refresh_overviews()
+        if not self.overview_queue.empty():
+            return self.overview_queue.get()
+        return None
