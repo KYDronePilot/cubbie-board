@@ -1,7 +1,7 @@
 # For handling all operations on the two LCD displays.
 from PIL import Image, ImageFont, ImageDraw
 
-from lcd_display import LCDDisplay
+from src.lcd_display import LCDDisplay
 
 FONT_DIR = 'font/'
 

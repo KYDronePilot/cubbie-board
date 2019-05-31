@@ -9,7 +9,7 @@ import pigpio
 from cubbie_board.core.active_games import ActiveGames
 from cubbie_board.core.scoreboard import Scoreboard
 from cubbie_board.lcd_display.lcd_controller import LcdController
-from cubbie_board.lcd_display.lcd_display import LCDDisplay
+from src.lcd_display import LCDDisplay
 from cubbie_board.segment_display import segment_display
 from cubbie_board.segment_display.segment_controller import SegmentController
 

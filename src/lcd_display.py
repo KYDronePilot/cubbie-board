@@ -1,14 +1,40 @@
+"""
+For modeling the LCD scoreboard displays.
+
+"""
+
 import Adafruit_GPIO.SPI as SPI
 import ST7735 as TFT
 
-from pwm_controller import PWMController
+from cubbie_board.lcd_display.pwm_controller import PWMController
+from typing import List
 
 
 # Default RST pins 25 and 23
 # Default SPI devices 0 and 1
 
 class LCDDisplay:
+    """
+    Represents one of the LCD scoreboard displays.
+
+    Attributes:
+        width (int): Display width
+        height (int): Display height
+
+    """
+
     def __init__(self, reset_pin, spi_device, pwm_pin, gpio):
+        # type: (int, int, int, pigpio) -> None
+        """
+        Basic display constructor.
+
+        Args:
+            reset_pin (int): Reset pin for display
+            spi_device (int): SPI Device index
+            pwm_pin (int): Display PWM pin
+            gpio (pigpio): GPIO instance for controlling PWM
+
+        """
         # Dimensions of Adafruit ST7735r display.
         self.WIDTH = 128
         self.HEIGHT = 128
