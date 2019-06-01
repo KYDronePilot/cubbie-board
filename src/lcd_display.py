@@ -5,17 +5,23 @@ For modeling the LCD scoreboard displays.
 
 import Adafruit_GPIO.SPI as SPI
 import ST7735 as TFT
+import pigpio
 
-from cubbie_board.lcd_display.pwm_controller import PWMController
-from typing import List
+from pwm_controller import PWMController
+from PIL import Image, ImageFont, ImageDraw
+from decouple import config
+import os.path
 
 
 # Default RST pins 25 and 23
 # Default SPI devices 0 and 1
 
-class LCDDisplay:
+class LCDDisplay(TFT.ST7735):
     """
     Represents one of the LCD scoreboard displays.
+
+    Notes:
+        Inherits from display controller class, fundamental representation of display.
 
     Attributes:
         width (int): Display width
@@ -23,59 +29,100 @@ class LCDDisplay:
 
     """
 
-    def __init__(self, reset_pin, spi_device, pwm_pin, gpio):
-        # type: (int, int, int, pigpio) -> None
+    def __init__(self, reset_pin, spi_device, spi_port, pwm_pin, dc_pin, clock_speed, gpio, width, height):
+        # type: (int, int, int, int, int, int, pigpio.pi, int, int) -> None
         """
-        Basic display constructor.
+        Setup display controller.
 
         Args:
             reset_pin (int): Reset pin for display
             spi_device (int): SPI Device index
-            pwm_pin (int): Display PWM pin
+            spi_port (int): SPI port number
+            pwm_pin (int): Display backlight PWM pin
+            dc_pin (int): Data/Command pin
+            clock_speed (int): SPI clock speed
             gpio (pigpio): GPIO instance for controlling PWM
+            width (int): Width of display (pixels)
+            height (int): Height of display (pixels)
 
         """
-        # Dimensions of Adafruit ST7735r display.
-        self.WIDTH = 128
-        self.HEIGHT = 128
-        # SPI clock speed.
-        self.SPEED_HZ = 4000000
-        # Data/Command pin.
-        self.DC = 24
-        # Reset pin for display.
-        self.RST = reset_pin
-        # SPI port.
-        self.SPI_PORT = 0
-        # SPI Device.
-        self.SPI_DEVICE = spi_device
-        # New object for diplay.
-        self.disp = TFT.ST7735(
-            self.DC,
-            rst=self.RST,
+        # Construct super.
+        TFT.ST7735.__init__(
+            self,
+            dc_pin,
+            rst=reset_pin,
             spi=SPI.SpiDev(
-                self.SPI_PORT,
-                self.SPI_DEVICE,
-                max_speed_hz=self.SPEED_HZ
+                spi_port,
+                spi_device,
+                max_speed_hz=clock_speed
             )
         )
-        # Holds the last image displayed.
-        self.image_cache = None
+        # Dimensions of display.
+        self.width = width  # type: int
+        self.height = height  # type: int
         # Start PWM thread.
-        self.pwm = PWMController(pwm_pin, gpio)
+        self.pwm = PWMController(pwm_pin, gpio)  # type: PWMController
         self.pwm.start()
         # Initialize display.
-        self.disp.begin()
+        self.begin()
 
-    # Display a cached image if none specified or a specified image.
-    def display_image(self, image=None):
-        # If no image was specified, use the cache.
-        if image is None:
-            image = self.image_cache
-        # Fail-safe, if no image was in the cache either.
-        if image is None:
-            print('No image to display!')
-            return
-        # Cache the image.
-        self.image_cache = image
+    def display_image(self, image):
+        # type: (Image) -> None
+        """
+        Wrapper for displaying images.
+
+        Args:
+            image (Image): The image to display
+
+        Returns:
+            None
+
+        """
         # Display the image.
-        self.disp.display(image)
+        self.display(image)
+
+    def _add_text(self, text, image, font='arial.ttf'):
+        # type: (str, Image, str) -> Image
+        """
+        Add text to an image.
+
+        Args:
+            text (str): The text to add
+            image (Image): Image to draw on
+            font (str): Name of font file
+
+        Returns:
+            Image: Annotated image
+
+        """
+        # Get font.
+        font = ImageFont.truetype(os.path.join(config('FONT_DIR'), font), 15)
+        # Get size of text.
+        w, h = font.getsize(text)
+        # Where the text will be drawn.
+        x = 5
+        y = self.height - h - 5
+        draw = ImageDraw.Draw(image)
+        # Draw a rectangular background to make text stand out.
+        draw.rectangle((x - 5, y - 5, w + x + 5, h + y + 5), fill=(76, 76, 76))
+        # Draw text on rectangle.
+        draw.text((x, y), text, fill=(255, 255, 255), font=font)
+        return image
+
+    def add_winner_text(self, team, logo):
+        # type: (str, Image) -> Image
+        """
+        Add text of who won the game
+
+        Args:
+            team (str): Name of team who won
+            logo (Image): Logo of team who won
+
+        Returns:
+            Image: Team logo with winner text
+
+        """
+        # Text to add.
+        win_label = team + ' won!'
+        # Add text.
+        return self._add_text(win_label, logo)
