@@ -7,7 +7,7 @@ import Adafruit_GPIO.SPI as SPI
 import ST7735 as TFT
 import pigpio
 
-from pwm_controller import PWMController
+from backlight_controller import BacklightController
 from PIL import Image, ImageFont, ImageDraw
 from decouple import config
 import os.path as path
@@ -61,7 +61,7 @@ class LCDDisplay(TFT.ST7735):
         self._width = width  # type: int
         self._height = height  # type: int
         # Start PWM thread.
-        # self.pwm = PWMController(pwm_pin, gpio)  # type: PWMController
+        # self.pwm = BacklightController(pwm_pin, gpio)  # type: BacklightController
         # self.pwm.start()
         # Initialize display.
         self.begin()
