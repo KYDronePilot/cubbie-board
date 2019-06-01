@@ -10,7 +10,7 @@ import pigpio
 from pwm_controller import PWMController
 from PIL import Image, ImageFont, ImageDraw
 from decouple import config
-import os.path
+import os.path as path
 
 
 # Default RST pins 25 and 23
@@ -57,12 +57,12 @@ class LCDDisplay(TFT.ST7735):
                 max_speed_hz=clock_speed
             )
         )
-        # Dimensions of display.
-        self.width = width  # type: int
-        self.height = height  # type: int
+        # Actual dimensions of display.
+        self._width = width  # type: int
+        self._height = height  # type: int
         # Start PWM thread.
-        self.pwm = PWMController(pwm_pin, gpio)  # type: PWMController
-        self.pwm.start()
+        # self.pwm = PWMController(pwm_pin, gpio)  # type: PWMController
+        # self.pwm.start()
         # Initialize display.
         self.begin()
 
@@ -96,12 +96,18 @@ class LCDDisplay(TFT.ST7735):
 
         """
         # Get font.
-        font = ImageFont.truetype(os.path.join(config('FONT_DIR'), font), 15)
+        font = ImageFont.truetype(
+            path.join(path.join(path.dirname(path.dirname(__file__))),
+                      config('FONT_DIR'),
+                      font
+                      ),
+            15
+        )
         # Get size of text.
         w, h = font.getsize(text)
         # Where the text will be drawn.
         x = 5
-        y = self.height - h - 5
+        y = self._height - h - 5
         draw = ImageDraw.Draw(image)
         # Draw a rectangular background to make text stand out.
         draw.rectangle((x - 5, y - 5, w + x + 5, h + y + 5), fill=(76, 76, 76))

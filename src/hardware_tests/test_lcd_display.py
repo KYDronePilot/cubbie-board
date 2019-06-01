@@ -35,7 +35,17 @@ class TestLCDDisplay(TestCase):
         self.display.display_image(self.cubs_logo)
 
     def test__add_text(self):
-        self.fail()
+        """
+        Try adding text to an image and displaying it.
+
+        """
+        image = self.display._add_text('Testing is awesome!', self.cubs_logo)
+        self.display.display_image(image)
 
     def test_add_winner_text(self):
-        self.fail()
+        """
+        Try added text for the team that won and display it.
+
+        """
+        image = self.display.add_winner_text('Cubs', self.cubs_logo)
+        self.display.display_image(image)
