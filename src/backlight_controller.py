@@ -124,7 +124,7 @@ class BacklightController(threading.Thread):
         Check for duty cycle changes and make transitions as needed.
 
         """
-        while not self._stop_handle.is_set():
+        while not self._stop_handle.is_set() or not self._update_queue.empty():
             # If new duty cycle in queue, transition to it.
             if not self._update_queue.empty():
                 self._transition(self._update_queue.get())

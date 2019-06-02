@@ -82,9 +82,6 @@ class LcdController:
         """
         Prepare displays for script exit.
 
-        Notes:
-            FIXME: Exiting before displays are fully off.
-
         """
         # Turn off displays.
         self._turn_off_displays()

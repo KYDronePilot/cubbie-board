@@ -73,8 +73,6 @@ class LCDDisplay(TFT.ST7735):
         Prepare display for script exit.
 
         """
-        # Turn off backlight.
-        self.backlight.turn_off()
         # Stop backlight thread.
         self.backlight.stop()
 
