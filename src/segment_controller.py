@@ -6,7 +6,7 @@ from time import sleep
 
 import RPi.GPIO as GPIO
 
-from segment_display import MCP23008
+from segment_display import SegmentDisplay
 
 # Number of iterations before checking the queue.
 COUNTER = 100
@@ -73,11 +73,11 @@ class SegmentController(threading.Thread):
             elif key == 'inning_state':
                 # Home display's extra IO pin represents top, away's represents bottom.
                 if val == 'Top':
-                    self.refresh.home.extra_pin_on = True
-                    self.refresh.away.extra_pin_on = False
+                    self.refresh.home.is_extra_pin_on = True
+                    self.refresh.away.is_extra_pin_on = False
                 elif val == 'Bottom':
-                    self.refresh.home.extra_pin_on = False
-                    self.refresh.away.extra_pin_on = True
+                    self.refresh.home.is_extra_pin_on = False
+                    self.refresh.away.is_extra_pin_on = True
             # Shut off all displays.
             elif key == 'off':
                 self.refresh.off()
@@ -113,9 +113,9 @@ class Refresh(object):
     def __init__(self, home, away, inning, l_pin, r_pin):
         """
 
-        :type home: MCP23008
-        :type away: MCP23008
-        :type inning: MCP23008
+        :type home: SegmentDisplay
+        :type away: SegmentDisplay
+        :type inning: SegmentDisplay
         """
         # Display objects.
         self.home = home
