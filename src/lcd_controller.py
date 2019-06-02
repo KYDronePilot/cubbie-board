@@ -1,17 +1,19 @@
-# For handling all operations on the two LCD displays.
-from PIL import Image, ImageFont, ImageDraw
+"""
+Module for managing the home and away LCD displays.
+
+"""
+
+import os
+import os.path
+
+import pigpio
+from PIL import Image
+from decouple import config
+from typing import Dict
 
 from src.lcd_display import LCDDisplay
-from typing import List, Dict
-from decouple import config
-import pigpio
-import os.path
-import os
-
-FONT_DIR = 'font/'
 
 
-# Thread to control LCD displays.
 class LcdController:
     """
     LCD display controller.
@@ -31,35 +33,61 @@ class LcdController:
         """
         # Configure the home and away LCD displays.
         self.home_display = LCDDisplay(
-            config('HOME_LCD_RESET_PIN'),
-            config('HOME_LCD_SPI_DEVICE'),
-            config('LCD_SPI_PORT'),
-            config('HOME_LCD_PWM_PIN'),
-            config('LCD_DC_PIN'),
-            config('LCD_SPI_CLOCK_SPEED'),
+            config('HOME_LCD_RESET_PIN', cast=int),
+            config('HOME_LCD_SPI_DEVICE', cast=int),
+            config('LCD_SPI_PORT', cast=int),
+            config('HOME_LCD_PWM_PIN', cast=int),
+            config('LCD_DC_PIN', cast=int),
+            config('LCD_SPI_CLOCK_SPEED', cast=int),
             pigpio.pi(),
-            config('LCD_WIDTH'),
-            config('LCD_HEIGHT')
+            config('LCD_WIDTH', cast=int),
+            config('LCD_HEIGHT', cast=int)
         )  # type: LCDDisplay
         self.away_display = LCDDisplay(
-            config('AWAY_LCD_RESET_PIN'),
-            config('AWAY_LCD_SPI_DEVICE'),
-            config('LCD_SPI_PORT'),
-            config('AWAY_LCD_PWM_PIN'),
-            config('LCD_DC_PIN'),
-            config('LCD_SPI_CLOCK_SPEED'),
+            config('AWAY_LCD_RESET_PIN', cast=int),
+            config('AWAY_LCD_SPI_DEVICE', cast=int),
+            config('LCD_SPI_PORT', cast=int),
+            config('AWAY_LCD_PWM_PIN', cast=int),
+            config('LCD_DC_PIN', cast=int),
+            config('LCD_SPI_CLOCK_SPEED', cast=int),
             pigpio.pi(),
-            config('LCD_WIDTH'),
-            config('LCD_HEIGHT')
+            config('LCD_WIDTH', cast=int),
+            config('LCD_HEIGHT', cast=int)
         )  # type: LCDDisplay
-        self.logos = {}  # type: Dict[str, Image]
+        # Format path where logos are stored.
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), config('LOGO_DIR')))
+        # Load all logos into logos attribute.
+        self.logos = self._get_images(logo_path)  # type: Dict[str, Image]
+
+    def _turn_on_displays(self):
+        # type: () -> None
+        """
+        Turn both displays' backlights on.
+
+        """
+        self.home_display.backlight.turn_on()
+        self.away_display.backlight.turn_on()
+
+    def _turn_off_displays(self):
+        # type: () -> None
+        """
+        Turn both displays' backlights off.
+
+        """
+        self.home_display.backlight.turn_off()
+        self.away_display.backlight.turn_off()
 
     def exit(self):
         # type: () -> None
         """
         Prepare displays for script exit.
 
+        Notes:
+            FIXME: Exiting before displays are fully off.
+
         """
+        # Turn off displays.
+        self._turn_off_displays()
         # Exit the displays.
         self.home_display.exit()
         self.away_display.exit()
@@ -77,71 +105,58 @@ class LcdController:
             Dict[str, Image]: Images in directory as image name -> image object
 
         """
-        return {item.split('.jpg')[0]: Image.open(item) for item in os.listdir(path) if item.endswith('.jpg')}
+        return {
+            item.split('.jpg')[0]: Image.open(os.path.join(path, item))
+            for item in os.listdir(path) if item.endswith('.jpg')
+        }
 
-    def load_logos(self):
-        # type: () -> None
+    def _display_images(self, home_image, away_image):
+        # type: (Image, Image) -> None
         """
-        Load the team logos images into memory.
+        Display images on the home and away displays.
+
+        Args:
+            home_image (Image): Image to show on home display
+            away_image (Image): Image to show on away display
 
         """
-        # Format logo path.
-        logo_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), config('LOGO_DIR')))
-        # Get and set all images to attribute.
-        self.logos = self._get_images(logo_path)
+        self.home_display.display_image(home_image)
+        self.away_display.display_image(away_image)
+        # Ensure backlights are on.
+        self._turn_on_displays()
 
-    # Get an image object from file.
-    def open_image(self, filename, logo=False):
-        # Extra path to team logos.
-        logo_path = str()
-        # If the image is a logo, set the path.
-        if logo:
-            logo_path = 'logos/'
-        # Open the specified file and return it.
-        return Image.open('img/{0}{1}.jpg'.format(logo_path, filename))
+    def display_team_logos(self, home_team, away_team):
+        # type: (str, str) -> None
+        """
+        Display logos for the home and away teams.
 
-    # Display an image object.
-    def display_image(self, home_away, image):
-        # Display it on the specified display.
-        getattr(self, home_away).display_image(image=image)
+        Args:
+            home_team (str): Name of home team
+            away_team (str): Name of away team
 
-    # Render an image to be displayed that shows who won on the winner's LCD display.
-    def render_winner_label(self, team_name, image):
-        # If the team that won is the Cubs, come on, there's gotta be a 'W'.
-        if team_name == 'Cubs':
-            return self.open_image('cubs_w_flag')
-        # Get a font object.
-        font = ImageFont.truetype(FONT_DIR + 'arial.ttf', 15)
-        # Text to be written.
-        text = '{} won!'.format(team_name)
-        # Get size of text from font object.
-        w, h = font.getsize(text)
-        # Where the text will be drawn.
-        x = 5
-        y = 128 - h - 5
-        # Get draw object.
-        draw = ImageDraw.Draw(image)
-        # Draw a rectangular background to make the text stand out.
-        draw.rectangle((x - 5, y - 5, w + x + 5, h + y + 5), fill=(76, 76, 76))
-        # Draw the text inside the box.
-        draw.text((x, y), text, fill=(255, 255, 255), font=font)
-        # Return image.
-        return image
+        """
+        self._display_images(self.logos[home_team], self.logos[away_team])
 
-    # Show team logos, overlaying any necessary information based on extra kwargs.
-    def display_team_logos(self, home_team, away_team, **kwargs):
-        # Get team logos.
-        home_logo = self.open_image(home_team, logo=True)
-        away_logo = self.open_image(away_team, logo=True)
-        # Perform operations based on kwargs.
-        for key, val in kwargs.items():
-            # If a winner is specified, alter their team logo accordingly.
-            if key == 'winner':
-                # Update the logo of the winning team.
-                exec ("{0}_logo = self.render_winner_label('{1}', {0}_logo)".format(val[0], val[1]))
-        # Display the images.
-        self.display_image('home', home_logo)
-        self.display_image('away', away_logo)
-        # Brighten screens if dim.
-        self.home.backlight.q.put((100, 100, False), block=False)
-        self.away.backlight.q.put((100, 100, False), block=False)
+    def display_team_logos_final(self, home_team, away_team, home_wins):
+        # type: (str, str, bool) -> None
+        """
+        Display team logos with win message for a game that is final.
+
+        Notes:
+            TODO: Display Cubs 'W' logo here.
+
+        Args:
+            home_team (str): Name of home team
+            away_team (str): Name of away team
+            home_wins (bool): Whether or not the home team won
+
+        """
+        # Get copies of team logos.
+        home_logo = self.logos[home_team].copy()
+        away_logo = self.logos[away_team].copy()
+        # Add win message to the team that won's logo.
+        if home_wins:
+            home_logo = self.home_display.add_winner_text(home_team, home_logo)
+        else:
+            away_logo = self.away_display.add_winner_text(away_team, away_logo)
+        self._display_images(home_logo, away_logo)
