@@ -3,14 +3,15 @@ For modeling the LCD scoreboard displays.
 
 """
 
+import os.path as path
+
 import Adafruit_GPIO.SPI as SPI
 import ST7735 as TFT
 import pigpio
-
-from backlight_controller import BacklightController
 from PIL import Image, ImageFont, ImageDraw
 from decouple import config
-import os.path as path
+
+from backlight_controller import BacklightController
 
 
 # Default RST pins 25 and 23
@@ -60,11 +61,22 @@ class LCDDisplay(TFT.ST7735):
         # Actual dimensions of display.
         self._width = width  # type: int
         self._height = height  # type: int
-        # Start PWM thread.
-        # self.pwm = BacklightController(pwm_pin, gpio)  # type: BacklightController
-        # self.pwm.start()
+        self.backlight = BacklightController(pwm_pin, gpio)  # type: BacklightController
+        # Start backlight thread.
+        self.backlight.start()
         # Initialize display.
         self.begin()
+
+    def exit(self):
+        # type: () -> None
+        """
+        Prepare display for script exit.
+
+        """
+        # Turn off backlight.
+        self.backlight.turn_off()
+        # Stop backlight thread.
+        self.backlight.stop()
 
     def display_image(self, image):
         # type: (Image) -> None
@@ -73,9 +85,6 @@ class LCDDisplay(TFT.ST7735):
 
         Args:
             image (Image): The image to display
-
-        Returns:
-            None
 
         """
         # Display the image.

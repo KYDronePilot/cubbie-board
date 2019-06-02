@@ -95,7 +95,7 @@ class CubbieBoardDaemon(Daemon):
         # Turn off the 7-segment displays.
         self.segment_ctl.q.put({'off': None}, block=False)
         # Turn off the LCD displays.
-        self.lcd_ctl.off()
+        self.lcd_ctl.exit()
         # Set the display status var to off.
         self.displays_on = False
 

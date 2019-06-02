@@ -2,42 +2,93 @@
 from PIL import Image, ImageFont, ImageDraw
 
 from src.lcd_display import LCDDisplay
+from typing import List, Dict
+from decouple import config
+import pigpio
+import os.path
+import os
 
 FONT_DIR = 'font/'
 
 
 # Thread to control LCD displays.
 class LcdController:
-    def __init__(self, home, away):
+    """
+    LCD display controller.
+
+    Attributes:
+        home_display (LCDDisplay): Home LCD display
+        away_display (LCDDisplay): Away LCD display
+        logos (Dict[str, Image]): Team name -> team logo for all logos
+
+    """
+
+    def __init__(self):
+        # type: () -> None
         """
+        Initialize LCD displays.
 
-        :type away: LCDDisplay
-        :type home: LCDDisplay
         """
-        # Home and away display objects.
-        self.home = home
-        self.away = away
-        # Current images that are being displayed on each display.
-        self.home_image = None
-        self.away_image = None
+        # Configure the home and away LCD displays.
+        self.home_display = LCDDisplay(
+            config('HOME_LCD_RESET_PIN'),
+            config('HOME_LCD_SPI_DEVICE'),
+            config('LCD_SPI_PORT'),
+            config('HOME_LCD_PWM_PIN'),
+            config('LCD_DC_PIN'),
+            config('LCD_SPI_CLOCK_SPEED'),
+            pigpio.pi(),
+            config('LCD_WIDTH'),
+            config('LCD_HEIGHT')
+        )  # type: LCDDisplay
+        self.away_display = LCDDisplay(
+            config('AWAY_LCD_RESET_PIN'),
+            config('AWAY_LCD_SPI_DEVICE'),
+            config('LCD_SPI_PORT'),
+            config('AWAY_LCD_PWM_PIN'),
+            config('LCD_DC_PIN'),
+            config('LCD_SPI_CLOCK_SPEED'),
+            pigpio.pi(),
+            config('LCD_WIDTH'),
+            config('LCD_HEIGHT')
+        )  # type: LCDDisplay
+        self.logos = {}  # type: Dict[str, Image]
 
-    def __del__(self):
-        # Dim displays.
-        self.off()
-        # Stop PWM threads.
-        self.home.pwm.shut.set()
-        self.away.pwm.shut.set()
-        self.home.pwm.join()
-        self.away.pwm.join()
+    def exit(self):
+        # type: () -> None
+        """
+        Prepare displays for script exit.
 
-    # Turn off the backlight for both displays.
-    def off(self):
-        # Dim displays.
-        self.away.pwm.q.put((0, 0, False), block=False)
-        self.home.pwm.q.put((0, 0, False), block=False)
-        # Wait till dimmed.
-        while self.away.pwm.current > 0 or self.home.pwm.current > 0:
-            pass
+        """
+        # Exit the displays.
+        self.home_display.exit()
+        self.away_display.exit()
+
+    @staticmethod
+    def _get_images(path):
+        # type: (str) -> Dict[str, Image]
+        """
+        Get all jpg images in a directory.
+
+        Args:
+            path (str): Directory to look in
+
+        Returns:
+            Dict[str, Image]: Images in directory as image name -> image object
+
+        """
+        return {item.split('.jpg')[0]: Image.open(item) for item in os.listdir(path) if item.endswith('.jpg')}
+
+    def load_logos(self):
+        # type: () -> None
+        """
+        Load the team logos images into memory.
+
+        """
+        # Format logo path.
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), config('LOGO_DIR')))
+        # Get and set all images to attribute.
+        self.logos = self._get_images(logo_path)
 
     # Get an image object from file.
     def open_image(self, filename, logo=False):
@@ -92,5 +143,5 @@ class LcdController:
         self.display_image('home', home_logo)
         self.display_image('away', away_logo)
         # Brighten screens if dim.
-        self.home.pwm.q.put((100, 100, False), block=False)
-        self.away.pwm.q.put((100, 100, False), block=False)
+        self.home.backlight.q.put((100, 100, False), block=False)
+        self.away.backlight.q.put((100, 100, False), block=False)

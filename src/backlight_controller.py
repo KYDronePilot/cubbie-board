@@ -85,6 +85,8 @@ class BacklightController(threading.Thread):
 
         """
         self._stop_handle.set()
+        # Join the thread.
+        self.join()
 
     def _write_duty_cycle(self, duty_cycle):
         # type: (int) -> None
