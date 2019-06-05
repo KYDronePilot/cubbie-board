@@ -11,7 +11,7 @@ import RPi.GPIO as GPIO
 
 from segment_display import SegmentDisplay
 from decouple import config
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Tuple, Any, Callable
 
 # Number of iterations before checking the queue.
 COUNTER = 100
@@ -23,6 +23,9 @@ class SegmentController(threading.Thread):
     """
     Threaded controller for the 7-segment displays.
 
+    Notes:
+        TODO: Add thread-safe attribute to functions that are.
+
     Attributes:
         home_display (SegmentDisplay): Home display
         away_display (SegmentDisplay): Away display
@@ -33,8 +36,10 @@ class SegmentController(threading.Thread):
         _stop_handle (threading.Event): Handle to stop the thread
         _is_double_mode (bool): Whether the display is in double digit mode
         _is_top_inning (bool): Whether or not it is the top of the inning
+        _update_functions (Dict[str, Callable]): Functions for handling updates of specific fields
 
     """
+
     def __init__(self, _left_digit_pin, _right_digit_pin):
         """
         Construct the segment display controller.
@@ -68,6 +73,12 @@ class SegmentController(threading.Thread):
         self.cnt = COUNTER
         # For keeping track of whether the display should be on or off.
         self.on = False
+        self._update_functions = {
+            'inning': self.update_inning,
+            'inning_state': self.update_inning_state,
+            'home_team_runs': self.update_home_score,
+            'away_team_runs': self.update_away_score
+        }  # type: Dict[str, Callable]
 
     def update_inning(self, inning):
         # type: (int) -> None
@@ -78,7 +89,7 @@ class SegmentController(threading.Thread):
             inning (int): New inning
 
         """
-        # self.inning_display.number = inning
+        self.inning_display.number = inning
 
     def update_inning_state(self, state):
         # type: (str) -> None
@@ -86,12 +97,23 @@ class SegmentController(threading.Thread):
         Update the inning state.
 
         Notes:
-            Accepts 'Top' or 'Bottom' as inning states.
+            Home display's extra pin is connected to the top of inning indicator, away display's is connected to
+            the bottom of inning indicator.
 
         Args:
-            state (str): Inning state
+            state (str): Inning state (one of 'Top' or 'Bottom')
 
         """
+        if state == 'Top':
+            self.home_display.is_extra_pin_on = True
+            self.away_display.is_extra_pin_on = False
+        if state == 'Bottom':
+            self.home_display.is_extra_pin_on = False
+            self.away_display.is_extra_pin_on = True
+        else:
+            # Else, turn off indicators.
+            self.home_display.is_extra_pin_on = False
+            self.away_display.is_extra_pin_on = False
 
     def update_home_score(self, home_score):
         # type: (int) -> None
@@ -102,7 +124,7 @@ class SegmentController(threading.Thread):
             home_score (int): New score
 
         """
-        # self.home_display.number = home_score
+        self.home_display.number = home_score
 
     def update_away_score(self, away_score):
         # type: (int) -> None
@@ -113,18 +135,55 @@ class SegmentController(threading.Thread):
             away_score (int): New score
 
         """
-        # self.away_display.number = away_score
+        self.away_display.number = away_score
 
-    def _process_update(self, key, value):
+    def _read_update(self):
+        # type: () -> Union[Tuple[str, Union[str, int]], None]
+        """
+        Read and return an update from the update queue.
+
+        Returns:
+            Union[Tuple[str, Union[str, int]], None]: Next item on the update queue
+
+        """
+        # Return nothing if no items in queue.
+        if self._update_queue.empty():
+            return None
+        item = self._update_queue.get()
+        return item[0], item[1]
+
+    def write_update(self, key, value):
         # type: (str, Union[str, int]) -> None
         """
-        Process a change from the update queue.
+        Write an update to the update queue.
+
+        Notes:
+            Thread-safe
 
         Args:
-            key (str): Key describing change
-            value (Union[str, int]): Value of change
+            key (str): Field name
+            value (Union[str, int]): Update value
 
         """
+        self._update_queue.put((key, value))
+
+    def process_update(self, key, value):
+        # type: (str, Union[str, int]) -> None
+        """
+        Process an update taken from the queue.
+
+        Notes:
+            Passes the key and value to the function needed to process them.
+
+        Args:
+            key (str): Key describing update
+            value (Union[str, int]): Update value
+
+        """
+        # Get the function handler.
+        handler = self._update_functions[key]
+        # Execute it.
+        handler(value)
 
     # Cleanup the GPIO and shut off the displays on delete.
     def __del__(self):
