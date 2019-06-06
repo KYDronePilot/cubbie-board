@@ -110,6 +110,19 @@ class SegmentDisplay(object):
         return self._digit_2
 
     @property
+    def is_double_digit_mode(self):
+        # type: () -> bool
+        """
+        Checks whether the display is in double digit mode.
+
+        Returns:
+            bool: Whether the display is in double digit mode
+
+        """
+        # If first digit set to some non-negative value, display is in double digit mode.
+        return self._digit_1 != -1
+
+    @property
     def number(self):
         # type: () -> int
         """

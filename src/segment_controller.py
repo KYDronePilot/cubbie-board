@@ -40,45 +40,44 @@ class SegmentController(threading.Thread):
 
     """
 
-    def __init__(self, _left_digit_pin, _right_digit_pin):
+    # Timeout between blinking digits.
+    BLINK_TIMEOUT = 0.005
+
+    def __init__(self):
         """
         Construct the segment display controller.
-
-        Args:
-            _left_digit_pin (int): Pin for enabling the left digit
-            _right_digit_pin (int): Pin for enabling the right digit
 
         """
         threading.Thread.__init__(self)
         # Construct the segment displays.
         self.home_display = SegmentDisplay(
-            1, config('HOME_MCP23008_ADDRESS', cast=int)
+            1, int(config('HOME_MCP23008_ADDRESS'), 0)
         )  # type: SegmentDisplay
         self.away_display = SegmentDisplay(
-            1, config('AWAY_MCP23008_ADDRESS', cast=int)
+            1, int(config('AWAY_MCP23008_ADDRESS'), 0)
         )  # type: SegmentDisplay
         self.inning_display = SegmentDisplay(
-            1, config('INNING_MCP23008_ADDRESS', cast=int)
+            1, int(config('INNING_MCP23008_ADDRESS'), 0)
         )  # type: SegmentDisplay
-        self._left_digit_pin = _left_digit_pin  # type: int
-        self._right_digit_pin = _right_digit_pin  # type: int
+        self._left_digit_pin = config('LEFT_DIGIT_PIN', cast=int)  # type: int
+        self._right_digit_pin = config('RIGHT_DIGIT_PIN', cast=int)  # type: int
         self._update_queue = Queue()  # type: Queue
         self._stop_handle = threading.Event()  # type: threading.Event
         self._is_double_mode = False  # type: bool
         self._is_top_inning = True  # type: bool
-        # Initial set to the right digit.
-        GPIO.output(left_dig_tran, GPIO.LOW)
-        GPIO.output(right_dig_tran, GPIO.HIGH)
-        # Counter for determining if the queue should be checked.
-        self.cnt = COUNTER
-        # For keeping track of whether the display should be on or off.
-        self.on = False
         self._update_functions = {
             'inning': self.update_inning,
             'inning_state': self.update_inning_state,
             'home_team_runs': self.update_home_score,
             'away_team_runs': self.update_away_score
         }  # type: Dict[str, Callable]
+        # Set up digit pins.
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self._left_digit_pin, GPIO.OUT)
+        GPIO.setup(self._right_digit_pin, GPIO.OUT)
+        # Initially set to display the right digit.
+        GPIO.output(self._left_digit_pin, GPIO.LOW)
+        GPIO.output(self._right_digit_pin, GPIO.HIGH)
 
     def update_inning(self, inning):
         # type: (int) -> None
@@ -87,6 +86,9 @@ class SegmentController(threading.Thread):
 
         Args:
             inning (int): New inning
+
+        Returns:
+            None
 
         """
         self.inning_display.number = inning
@@ -97,17 +99,20 @@ class SegmentController(threading.Thread):
         Update the inning state.
 
         Notes:
-            Home display's extra pin is connected to the top of inning indicator, away display's is connected to
-            the bottom of inning indicator.
+            Home display's extra pin is connected to the top inning indicator, away display's is connected to
+            the bottom inning indicator.
 
         Args:
             state (str): Inning state (one of 'Top' or 'Bottom')
+
+        Returns:
+            None
 
         """
         if state == 'Top':
             self.home_display.is_extra_pin_on = True
             self.away_display.is_extra_pin_on = False
-        if state == 'Bottom':
+        elif state == 'Bottom':
             self.home_display.is_extra_pin_on = False
             self.away_display.is_extra_pin_on = True
         else:
@@ -123,6 +128,9 @@ class SegmentController(threading.Thread):
         Args:
             home_score (int): New score
 
+        Returns:
+            None
+
         """
         self.home_display.number = home_score
 
@@ -134,8 +142,30 @@ class SegmentController(threading.Thread):
         Args:
             away_score (int): New score
 
+        Returns:
+            None
+
         """
         self.away_display.number = away_score
+
+    def _update_display_mode(self):
+        # type: () -> None
+        """
+        Update whether the display is in single or double digit mode.
+
+        Returns:
+            None
+
+        """
+        # System is in double digit mode if only one display is.
+        if (
+            self.home_display.is_double_digit_mode
+            or self.away_display.is_double_digit_mode
+            or self.inning_display.is_double_digit_mode
+        ):
+            self._is_double_mode = True
+        else:
+            self._is_double_mode = False
 
     def _read_update(self):
         # type: () -> Union[Tuple[str, Union[str, int]], None]
@@ -164,6 +194,9 @@ class SegmentController(threading.Thread):
             key (str): Field name
             value (Union[str, int]): Update value
 
+        Returns:
+            None
+
         """
         self._update_queue.put((key, value))
 
@@ -176,154 +209,124 @@ class SegmentController(threading.Thread):
             Passes the key and value to the function needed to process them.
 
         Args:
-            key (str): Key describing update
+            key (str): Field name
             value (Union[str, int]): Update value
+
+        Returns:
+            None
 
         """
         # Get the function handler.
         handler = self._update_functions[key]
         # Execute it.
         handler(value)
+        # Update the display mode.
+        self._update_display_mode()
 
-    # Cleanup the GPIO and shut off the displays on delete.
-    def __del__(self):
+    def process_updates(self):
+        # type: () -> None
+        """
+        Read and process all updates on the update queue.
+
+        Returns:
+            None
+
+        """
+        while not self._update_queue.empty():
+            update_item = self._read_update()
+            self.process_update(update_item[0], update_item[1])
+        # If not in double digit mode, display second digit on each display.
+        if not self._is_double_mode:
+            self._display_digit_2()
+
+    def _display_digit_1(self):
+        """
+        Display the first digit on each display.
+
+        Returns:
+            None
+
+        """
+        self.home_display.display_digit_1()
+        self.away_display.display_digit_1()
+        self.inning_display.display_digit_1()
+
+    def _display_digit_2(self):
+        """
+        Display the second digit on each display.
+
+        Returns:
+            None
+
+        """
+        self.home_display.display_digit_2()
+        self.away_display.display_digit_2()
+        self.inning_display.display_digit_2()
+
+    def _clear(self):
+        """
+        Quickly clear the display.
+
+        Returns:
+            None
+
+        """
+        self.home_display.display_digit(-1)
+        self.away_display.display_digit(-1)
+        self.inning_display.display_digit(-1)
+
+    def _blink_digits(self):
+        """
+        Blink each digit on each display.
+
+        Returns:
+            None
+
+        """
+        # Clear displays
+        self._clear()
+        # Switch to lighting left digit
+        GPIO.output(self._right_digit_pin, GPIO.LOW)
+        GPIO.output(self._left_digit_pin, GPIO.HIGH)
+        # Display digit 1 on each display
+        self._display_digit_1()
+        sleep(SegmentController.BLINK_TIMEOUT)
+        # Clear again
+        self._clear()
+        # Switch to lighting right digit.
+        GPIO.output(self._left_digit_pin, GPIO.LOW)
+        GPIO.output(self._right_digit_pin, GPIO.HIGH)
+        # Display digit 2 on each display
+        self._display_digit_2()
+        sleep(SegmentController.BLINK_TIMEOUT)
+
+    def exit(self):
+        # type: () -> None
+        """
+        Prepare display for script exit.
+
+        Returns:
+            None
+
+        """
+        # Stop the thread.
+        self._stop_handle.set()
+        # Join thread.
+        self.join()
+        # Cleanup GPIO and shut off displays.
         GPIO.cleanup()
-        self.refresh.off()
+        self.home_display.off()
+        self.away_display.off()
+        self.inning_display.off()
 
     # Actual thread that is run.
     def run(self):
         while not self._stop_handle.is_set():
-            # Wait a little bit before checking the counter.
-            sleep(0.002)
-            # Call cache updater method if counter has reached 0.
-            if self.cnt == 0:
-                self.update_cache()
-            # If not in single digit mode and displays are on, blink both digits on each display.
-            elif not self._is_double_mode and self.on:
-                self.refresh.update_double()
-            # Decrement the counter.
-            self.cnt -= 1
-
-    # Update the segment display caches if there is something in the queue.
-    def update_cache(self):
-        # Reset counter.
-        self.cnt = COUNTER
-        # Exit if the queue is empty.
-        if self.q.empty():
-            return
-        # Initially set that the displays will be on.
-        self.on = True
-        # Get dictionary of updated values.
-        val_dict = self.q.get()
-        for key, val in val_dict.items():
-            # Update display objects if name and val in the dict.
-            if key == 'home_team_runs':
-                self.refresh.home.update_cache(val)
-            elif key == 'away_team_runs':
-                self.refresh.away.update_cache(val)
-            elif key == 'inning':
-                self.refresh.inning.update_cache(val)
-            elif key == 'inning_state':
-                # Home display's extra IO pin represents top, away's represents bottom.
-                if val == 'Top':
-                    self.refresh.home.is_extra_pin_on = True
-                    self.refresh.away.is_extra_pin_on = False
-                elif val == 'Bottom':
-                    self.refresh.home.is_extra_pin_on = False
-                    self.refresh.away.is_extra_pin_on = True
-            # Shut off all displays.
-            elif key == 'off':
-                self.refresh.off()
-                # Set that the displays are off.
-                self.on = False
-        # After updating the values, set to the correct segment mode.
-        self.check_mode()
-        # Only run an update method if the displays are on.
-        if self.on:
-            # Update the display using single mode.
+            # If there are updates, process them.
+            if not self._update_queue.empty():
+                self.process_updates()
+            # If in double digit mode, blink digits.
             if self._is_double_mode:
-                self.refresh.update_single()
-            # Update the display using double mode.
-            else:
-                self.refresh.update_double()
-
-    # Checks current display numbers to determine whether to be in single mode or not.
-    def check_mode(self):
-        # If all displays' left digits are blank, set to single mode.
-        if (
-                self.refresh.home.cache_dig_1 == 10 and
-                self.refresh.away.cache_dig_1 == 10 and
-                self.refresh.inning.cache_dig_1 == 10
-        ):
-            self._is_double_mode = True
-        # Else, set to 2-segment mode.
-        else:
-            self._is_double_mode = False
-
-
-# Handles refreshing of the displays.
-class Refresh(object):
-    def __init__(self, home, away, inning, l_pin, r_pin):
-        """
-
-        :type home: SegmentDisplay
-        :type away: SegmentDisplay
-        :type inning: SegmentDisplay
-        """
-        # Display objects.
-        self.home = home
-        self.away = away
-        self.inning = inning
-        # GPIO pins for switching which segment is on.
-        self.left_pin = l_pin
-        self.right_pin = r_pin
-        # Set up GPIO.
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.left_pin, GPIO.OUT)
-        GPIO.setup(self.right_pin, GPIO.OUT)
-
-    # Update displays when all numbers are single digit.
-    def update_single(self):
-        # Update each display.
-        self.home.write_cache()
-        self.away.write_cache()
-        self.inning.write_cache()
-
-    # Update displays when at least one is in 2-digit mode.
-    def update_double(self):
-        # Clear all displays.
-        self.clear()
-        # Switch to left digit.
-        GPIO.output(self.right_pin, GPIO.LOW)
-        GPIO.output(self.left_pin, GPIO.HIGH)
-        # Write the left digit to each display.
-        self.write(1)
-        # Wait a little while.
-        sleep(0.005)
-        # Clear again.
-        self.clear()
-        # Switch to right digit.
-        GPIO.output(self.left_pin, GPIO.LOW)
-        GPIO.output(self.right_pin, GPIO.HIGH)
-        # Write the right digit.
-        self.write(2)
-        # Wait again...
-        sleep(0.005)
-
-    # Clear all displays.
-    def clear(self):
-        self.home.write_number(10)
-        self.away.write_number(10)
-        self.inning.write_number(10)
-
-    # Turn off all displays.
-    def off(self):
-        self.home.off()
-        self.away.off()
-        self.inning.off()
-
-    # Write to the left or right digit of every display.
-    def write(self, digit):
-        self.home.write_cache(digit=digit)
-        self.away.write_cache(digit=digit)
-        self.inning.write_cache(digit=digit)
+                self._blink_digits()
+            # Delay some amount of time.
+            sleep(0.01)
