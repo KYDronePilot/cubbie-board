@@ -3,13 +3,15 @@ Main python module for running the scoreboard.
 
 """
 
+import time
+from datetime import date, timedelta
+
+from decouple import config
+from typing import ClassVar
+
 from src.game_manager import GameManager
 from src.lcd_controller import LcdController
 from src.segment_controller import SegmentController
-from datetime import date
-import time
-from datetime import date, timedelta
-from decouple import config
 
 
 class CubbieBoard(object):
@@ -24,6 +26,9 @@ class CubbieBoard(object):
 
     """
 
+    # Timeout when no games to display.
+    SCAN_TIMEOUT = 300  # type: ClassVar[int]
+
     def __init__(self):
         """
         Setup the scoreboard.
@@ -31,14 +36,14 @@ class CubbieBoard(object):
         """
         self.preferred_team = config('PREFERRED_TEAM')  # type: str
         # Setup the game manager.
-        self.game_manager = self.setup_game_manager()  # type: GameManager
+        self.game_manager = self._setup_game_manager()  # type: GameManager
         # Setup LCD controller.
         self.lcd_controller = LcdController()  # type: LcdController
         # Setup 7-segment display controller.
         self.segment_controller = SegmentController()  # type: SegmentController
         self.segment_controller.start()
 
-    def setup_game_manager(self):
+    def _setup_game_manager(self):
         # type: () -> GameManager
         """
         Setup the current game manager.
@@ -56,6 +61,21 @@ class CubbieBoard(object):
             if yesterday_game_manager.get_next_game() is not None:
                 return yesterday_game_manager
         return today_game_manager
+
+    def _update_game_manager(self):
+        """
+        Update the game manager, switching to the next day if necessary.
+
+        Returns:
+            None
+
+        """
+        # If on different day then manager, get new manager for next day.
+        if self.game_manager.current_date.day != date.today().day:
+            self.game_manager = GameManager(date.today(), self.preferred_team)
+        # Else, wait before continuing.
+        else:
+            time.sleep(CubbieBoard.SCAN_TIMEOUT)
 
     def run(self):
         """
