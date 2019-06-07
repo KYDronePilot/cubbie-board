@@ -8,6 +8,8 @@ from src.lcd_controller import LcdController
 from src.segment_controller import SegmentController
 from datetime import date
 import time
+from datetime import date, timedelta
+from decouple import config
 
 
 class CubbieBoard(object):
@@ -15,6 +17,7 @@ class CubbieBoard(object):
     Main cubbie board management class.
 
     Attributes:
+        preferred_team (str): The user's preferred team
         game_manager (GameManager): Game info manager
         lcd_controller (LcdController): Controller for LCD displays
         segment_controller (SegmentController): Controller for 7-segment displays
@@ -26,13 +29,33 @@ class CubbieBoard(object):
         Setup the scoreboard.
 
         """
+        self.preferred_team = config('PREFERRED_TEAM')  # type: str
         # Setup the game manager.
-        self.game_manager = GameManager(date.today(), 'Cubs')  # type: GameManager
+        self.game_manager = self.setup_game_manager()  # type: GameManager
         # Setup LCD controller.
         self.lcd_controller = LcdController()  # type: LcdController
         # Setup 7-segment display controller.
         self.segment_controller = SegmentController()  # type: SegmentController
         self.segment_controller.start()
+
+    def setup_game_manager(self):
+        # type: () -> GameManager
+        """
+        Setup the current game manager.
+
+        Returns:
+            GameManager: The current game manager
+
+        """
+        # Get manager for current day.
+        today_game_manager = GameManager(date.today(), self.preferred_team)
+        # If no games available, get manager for previous day.
+        if today_game_manager.get_next_game() is None:
+            yesterday_game_manager = GameManager(date.today() - timedelta(days=1), self.preferred_team)
+            # If a game is available, use that manager.
+            if yesterday_game_manager.get_next_game() is not None:
+                return yesterday_game_manager
+        return today_game_manager
 
     def run(self):
         """
