@@ -8,23 +8,15 @@ from Queue import Queue
 from time import sleep
 
 import RPi.GPIO as GPIO
+from decouple import config
+from typing import Union, Dict, Tuple, Callable
 
 from segment_display import SegmentDisplay
-from decouple import config
-from typing import List, Union, Dict, Tuple, Any, Callable
-
-# Number of iterations before checking the queue.
-COUNTER = 100
 
 
-# Main worker function that watches for digit changes, applying as needed and
-# blinks the segments if in 2-segment mode.
 class SegmentController(threading.Thread):
     """
     Threaded controller for the 7-segment displays.
-
-    Notes:
-        TODO: Add thread-safe attribute to functions that are.
 
     Attributes:
         home_display (SegmentDisplay): Home display
@@ -44,6 +36,7 @@ class SegmentController(threading.Thread):
     BLINK_TIMEOUT = 0.005
 
     def __init__(self):
+        # type: () -> None
         """
         Construct the segment display controller.
 
@@ -109,14 +102,16 @@ class SegmentController(threading.Thread):
             None
 
         """
+        # If top, enable top indicator.
         if state == 'Top':
             self.home_display.is_extra_pin_on = True
             self.away_display.is_extra_pin_on = False
+        # If bottom, enable bottom indicator.
         elif state == 'Bottom':
             self.home_display.is_extra_pin_on = False
             self.away_display.is_extra_pin_on = True
+        # Else, turn off indicators.
         else:
-            # Else, turn off indicators.
             self.home_display.is_extra_pin_on = False
             self.away_display.is_extra_pin_on = False
 
@@ -159,9 +154,9 @@ class SegmentController(threading.Thread):
         """
         # System is in double digit mode if only one display is.
         if (
-            self.home_display.is_double_digit_mode
-            or self.away_display.is_double_digit_mode
-            or self.inning_display.is_double_digit_mode
+                self.home_display.is_double_digit_mode
+                or self.away_display.is_double_digit_mode
+                or self.inning_display.is_double_digit_mode
         ):
             self._is_double_mode = True
         else:
@@ -240,6 +235,7 @@ class SegmentController(threading.Thread):
             self._display_digit_2()
 
     def _display_digit_1(self):
+        # type: () -> None
         """
         Display the first digit on each display.
 
@@ -252,6 +248,7 @@ class SegmentController(threading.Thread):
         self.inning_display.display_digit_1()
 
     def _display_digit_2(self):
+        # type: () -> None
         """
         Display the second digit on each display.
 
@@ -264,6 +261,7 @@ class SegmentController(threading.Thread):
         self.inning_display.display_digit_2()
 
     def _clear(self):
+        # type: () -> None
         """
         Quickly clear the display.
 
@@ -276,6 +274,7 @@ class SegmentController(threading.Thread):
         self.inning_display.display_digit(-1)
 
     def _blink_digits(self):
+        # type: () -> None
         """
         Blink each digit on each display.
 
@@ -283,20 +282,20 @@ class SegmentController(threading.Thread):
             None
 
         """
-        # Clear displays
+        # Clear displays.
         self._clear()
-        # Switch to lighting left digit
+        # Switch to lighting left digit.
         GPIO.output(self._right_digit_pin, GPIO.LOW)
         GPIO.output(self._left_digit_pin, GPIO.HIGH)
-        # Display digit 1 on each display
+        # Display digit 1 on each display.
         self._display_digit_1()
         sleep(SegmentController.BLINK_TIMEOUT)
-        # Clear again
+        # Clear again.
         self._clear()
         # Switch to lighting right digit.
         GPIO.output(self._left_digit_pin, GPIO.LOW)
         GPIO.output(self._right_digit_pin, GPIO.HIGH)
-        # Display digit 2 on each display
+        # Display digit 2 on each display.
         self._display_digit_2()
         sleep(SegmentController.BLINK_TIMEOUT)
 
@@ -319,8 +318,18 @@ class SegmentController(threading.Thread):
         self.away_display.off()
         self.inning_display.off()
 
-    # Actual thread that is run.
     def run(self):
+        # type: () -> None
+        """
+        Main thread execution function.
+
+        Notes:
+            Continue updating the display until stop handle is set.
+
+        Returns:
+            None
+
+        """
         while not self._stop_handle.is_set():
             # If there are updates, process them.
             if not self._update_queue.empty():
