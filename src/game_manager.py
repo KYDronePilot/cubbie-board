@@ -155,6 +155,21 @@ class GameManager(object):
                 if overview.is_active() or overview.is_final():
                     self.overview_queue.put(overview)
 
+    def _are_all_final(self):
+        # type: () -> bool
+        """
+        Check if all the overviews are final.
+
+        Returns:
+            bool: Whether or not all the overviews are final
+
+        """
+        cnt = 0
+        for game in self.overviews:
+            if game.is_final():
+                cnt += 1
+        return cnt == len(self.overviews)
+
     def refresh_overviews(self):
         # type: () -> None
         """
@@ -169,8 +184,9 @@ class GameManager(object):
         """
         # Update games, getting preferred team game index if active.
         pref_team_i = self._update_overviews()
-        # Refill game queue.
-        self._refill_queue(pref_team_i=pref_team_i)
+        # Refill game queue if not all games are final.
+        if not self._are_all_final():
+            self._refill_queue(pref_team_i=pref_team_i)
 
     def get_next_game(self):
         # type: () -> Union[None, GameOverview]
