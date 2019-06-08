@@ -3,17 +3,17 @@ Main python module for running the scoreboard.
 
 """
 
-import time
 import signal
+import time
 from datetime import date, timedelta
 
 from decouple import config
 from typing import ClassVar
 
 from src.game_manager import GameManager
+from src.game_overview import GameOverview
 from src.lcd_controller import LcdController
 from src.segment_controller import SegmentController
-from src.game_overview import GameOverview
 
 
 class CubbieBoard(object):
