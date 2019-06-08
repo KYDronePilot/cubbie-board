@@ -11,6 +11,7 @@ from PIL import Image
 from decouple import config
 from typing import Dict
 
+from src.game_overview import GameOverview
 from src.lcd_display import LCDDisplay
 
 
@@ -122,18 +123,6 @@ class LcdController:
         # Ensure backlights are on.
         self._turn_on_displays()
 
-    def display_team_logos(self, home_team, away_team):
-        # type: (str, str) -> None
-        """
-        Display logos for the home and away teams.
-
-        Args:
-            home_team (str): Name of home team
-            away_team (str): Name of away team
-
-        """
-        self._display_images(self.logos[home_team], self.logos[away_team])
-
     def display_team_logos_final(self, home_team, away_team, home_wins):
         # type: (str, str, bool) -> None
         """
@@ -157,3 +146,26 @@ class LcdController:
         else:
             away_logo = self.away_display.add_winner_text(away_team, away_logo)
         self._display_images(home_logo, away_logo)
+
+    def display_team_logos(self, game_overview):
+        # type: (GameOverview) -> None
+        """
+        Display logos for an overview.
+
+        Notes:
+            Displays win message for games that are final.
+
+        Args:
+            game_overview (GameOverview): Overview of game
+
+        """
+        # If final, display logos with annotation.
+        if game_overview.is_final():
+            self.display_team_logos_final(
+                game_overview.home_team_name,
+                game_overview.away_team_name,
+                game_overview.home_team_runs > game_overview.away_team_runs
+            )
+        # Else, display normal logos.
+        else:
+            self._display_images(self.logos[game_overview.home_team_name], self.logos[game_overview.away_team_name])

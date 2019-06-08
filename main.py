@@ -4,6 +4,7 @@ Main python module for running the scoreboard.
 """
 
 import time
+import signal
 from datetime import date, timedelta
 
 from decouple import config
@@ -12,6 +13,7 @@ from typing import ClassVar
 from src.game_manager import GameManager
 from src.lcd_controller import LcdController
 from src.segment_controller import SegmentController
+from src.game_overview import GameOverview
 
 
 class CubbieBoard(object):
@@ -42,6 +44,10 @@ class CubbieBoard(object):
         # Setup 7-segment display controller.
         self.segment_controller = SegmentController()  # type: SegmentController
         self.segment_controller.start()
+        # Register exit signal handler.
+        signal.signal(signal.SIGINT, self.exit_signal_handler)
+        signal.signal(signal.SIGHUP, self.exit_signal_handler)
+        signal.signal(signal.SIGTERM, self.exit_signal_handler)
 
     def _setup_game_manager(self):
         # type: () -> GameManager
@@ -63,6 +69,7 @@ class CubbieBoard(object):
         return today_game_manager
 
     def _update_game_manager(self):
+        # type: () -> None
         """
         Update the game manager, switching to the next day if necessary.
 
@@ -77,6 +84,40 @@ class CubbieBoard(object):
         else:
             time.sleep(CubbieBoard.SCAN_TIMEOUT)
 
+    def _update_displays(self, new_overview):
+        # type: (GameOverview) -> None
+        """
+        Update the displays with a new overview.
+
+        Returns:
+            None
+
+        """
+        # Update LCD displays.
+        self.lcd_controller.display_team_logos(new_overview)
+        # Update segment displays.
+        self.segment_controller.write_update('inning', new_overview.inning)
+        self.segment_controller.write_update('inning_state', new_overview.inning_state)
+        self.segment_controller.write_update('home_team_runs', new_overview.home_team_runs)
+        self.segment_controller.write_update('away_team_runs', new_overview.away_team_runs)
+
+    def exit_signal_handler(self, sig, frame):
+        """
+        Signal handler for exiting the program.
+
+        Args:
+            sig: The signal
+            frame: The frame
+
+        Returns:
+            None
+
+        """
+        print('Exiting')
+        self.lcd_controller.exit()
+        self.segment_controller.exit()
+        exit(0)
+
     def run(self):
         """
         Main execution loop.
@@ -85,24 +126,17 @@ class CubbieBoard(object):
             None
 
         """
-        for i in range(4):
+        while True:
             # Get the next game to display.
             next_game = self.game_manager.get_next_game()
-            # If none, exit.
+            # If none, update the manager and try again.
             if next_game is None:
-                return
-            # Update LCD displays.
-            self.lcd_controller.display_team_logos(next_game.home_team_name, next_game.away_team_name)
-            # Update segment displays.
-            self.segment_controller.write_update('inning', next_game.inning)
-            self.segment_controller.write_update('inning_state', next_game.inning_state)
-            self.segment_controller.write_update('home_team_runs', next_game.home_team_runs)
-            self.segment_controller.write_update('away_team_runs', next_game.away_team_runs)
-            # Wait 10 seconds.
+                self._update_game_manager()
+                continue
+            # Update displays with next game.
+            self._update_displays(next_game)
+            # Wait 10 seconds before repeating.
             time.sleep(10)
-        # Prepare for script shutdown.
-        self.lcd_controller.exit()
-        self.segment_controller.exit()
 
 
 if __name__ == '__main__':
