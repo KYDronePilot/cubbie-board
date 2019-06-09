@@ -299,6 +299,19 @@ class SegmentController(threading.Thread):
         self._display_digit_2()
         sleep(SegmentController.BLINK_TIMEOUT)
 
+    def turn_off_displays(self):
+        # type: () -> None
+        """
+        Turn off the displays.
+
+        Returns:
+            None
+
+        """
+        self.home_display.off()
+        self.away_display.off()
+        self.inning_display.off()
+
     def exit(self):
         # type: () -> None
         """

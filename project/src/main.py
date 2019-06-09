@@ -85,8 +85,10 @@ class CubbieBoard(object):
         # If on different day then manager, get new manager for next day.
         if self.game_manager.current_date.day != date.today().day:
             self.game_manager = GameManager(date.today(), self.preferred_team)
-        # Else, wait before continuing.
+        # Else, turn off displays and wait before continuing.
         else:
+            self.lcd_controller.turn_off_displays()
+            self.segment_controller.turn_off_displays()
             time.sleep(CubbieBoard.SCAN_TIMEOUT)
 
     def _update_displays(self, new_overview):

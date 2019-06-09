@@ -60,7 +60,7 @@ class LcdController:
         # Load all logos into logos attribute.
         self.logos = self._get_images(logo_path)  # type: Dict[str, Image]
 
-    def _turn_on_displays(self):
+    def turn_on_displays(self):
         # type: () -> None
         """
         Turn both displays' backlights on.
@@ -69,7 +69,7 @@ class LcdController:
         self.home_display.backlight.turn_on()
         self.away_display.backlight.turn_on()
 
-    def _turn_off_displays(self):
+    def turn_off_displays(self):
         # type: () -> None
         """
         Turn both displays' backlights off.
@@ -85,7 +85,7 @@ class LcdController:
 
         """
         # Turn off displays.
-        self._turn_off_displays()
+        self.turn_off_displays()
         # Exit the displays.
         self.home_display.exit()
         self.away_display.exit()
@@ -121,7 +121,7 @@ class LcdController:
         self.home_display.display_image(home_image)
         self.away_display.display_image(away_image)
         # Ensure backlights are on.
-        self._turn_on_displays()
+        self.turn_on_displays()
 
     def _add_winner_text(self, home_logo, away_logo, game_overview):
         # type: (Image, Image, GameOverview) -> Tuple[Image, Image]
