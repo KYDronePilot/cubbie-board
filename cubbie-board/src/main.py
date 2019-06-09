@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Main python module for running the scoreboard.
 
