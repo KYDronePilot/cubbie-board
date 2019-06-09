@@ -1,12 +1,12 @@
 # Cubbie Board
 
-![alt text](project/img/scoreboard_images/board_face_2.JPG "Cubbie Board Face")
+![alt text](cubbie-board/img/scoreboard_images/board_face_2.JPG "Cubbie Board Face")
 
 The Cubbie Board is an IOT, Chicago Cubs-themed baseball scoreboard. Powered by Python and a Raspberry Pi Zero W,
 this scoreboard will display your preferred team's game when live and cycle through other games when not.
 
 ## Parts List
-![alt text](project/img/scoreboard_images/pcb_face_2.JPG "Cubbie Board PCB Face")
+![alt text](cubbie-board/img/scoreboard_images/pcb_face_2.JPG "Cubbie Board PCB Face")
 
 * 1 [Raspberry Pi Zero W](http://a.co/6ZoiTxW), the brain of the system
 * 2 [Adafruit LCD TFT Displays](https://www.adafruit.com/product/2088) for team logos
@@ -25,7 +25,7 @@ this scoreboard will display your preferred team's game when live and cycle thro
 * Some resistors for the transistors
 
 ## Hardware Configuration
-![alt text](project/img/scoreboard_images/pcb_and_pi_face_1.JPG "Cubbie Board and Raspberry Pi")
+![alt text](cubbie-board/img/scoreboard_images/pcb_and_pi_face_1.JPG "Cubbie Board and Raspberry Pi")
 
 ### LCD Displays
 The LCD displays are controlled through an SPI interface. The Power, Clock, Slave In, and Data Command pins are
@@ -76,7 +76,7 @@ gradual brightness changes are executed and is an attribute of each display inst
 * requests
 
 ## Questions
-![alt text](project/img/scoreboard_images/pcb_and_pi_rear_in_case.JPG "Cubbie Board PCB Back")
+![alt text](cubbie-board/img/scoreboard_images/pcb_and_pi_rear_in_case.JPG "Cubbie Board PCB Back")
 
 If you have any questions about the project or would like additional information, please create an issue. I'll do my 
 best to answer your questions as best as possible.
