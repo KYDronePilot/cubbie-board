@@ -97,40 +97,40 @@ class TestGameManager(TestCase):
             cnt += 1
         self.assertEqual(1, cnt)
 
-    def test_refresh_overviews(self):
-        # Change the score of the Angels game and make active.
-        angels_i = self.manager._get_team_overview_i('Angels')
-        self.manager.overviews[angels_i].home_team_runs = -1
-        self.manager.overviews[angels_i].status = self.manager.overviews[angels_i].IN_PROGRESS_STATUS
-        # Refresh
-        self.manager.refresh_overviews()
-        # Score should be updated.
-        self.assertNotEqual(-1, self.manager.overviews[angels_i].home_team_runs)
-        # Queue should have 16 items.
-        cnt = 0
-        while not self.manager.overview_queue.empty():
-            self.manager.overview_queue.get()
-            cnt += 1
-        self.assertEqual(16, cnt)
+    # def test_refresh_overviews(self):
+    #     # Change the score of the Angels game and make active.
+    #     angels_i = self.manager._get_team_overview_i('Angels')
+    #     self.manager.overviews[angels_i].home_team_runs = -1
+    #     self.manager.overviews[angels_i].status = self.manager.overviews[angels_i].IN_PROGRESS_STATUS
+    #     # Refresh
+    #     self.manager.refresh_overviews()
+    #     # Score should be updated.
+    #     self.assertNotEqual(-1, self.manager.overviews[angels_i].home_team_runs)
+    #     # Queue should have 16 items.
+    #     cnt = 0
+    #     while not self.manager.overview_queue.empty():
+    #         self.manager.overview_queue.get()
+    #         cnt += 1
+    #     self.assertEqual(16, cnt)
 
-    def test_get_next_game(self):
-        """
-        Test the retrieval of a next game to display.
-
-        """
-        # Queue should get refilled.
-        game = self.manager.get_next_game()
-        # Game should be final.
-        self.assertTrue(game.is_final())
-        # Queue should not be empty.
-        self.assertFalse(self.manager.overview_queue.empty())
-        # Remove remaining.
-        cnt = 1
-        while True:
-            next_game = self.manager.get_next_game()
-            if game.game_id == next_game.game_id:
-                break
-            else:
-                cnt += 1
-        # Should be 16.
-        self.assertEqual(16, cnt)
+    # def test_get_next_game(self):
+    #     """
+    #     Test the retrieval of a next game to display.
+    #
+    #     """
+    #     # Queue should get refilled.
+    #     game = self.manager.get_next_game()
+    #     # Game should be final.
+    #     self.assertTrue(game.is_final())
+    #     # Queue should not be empty.
+    #     self.assertFalse(self.manager.overview_queue.empty())
+    #     # Remove remaining.
+    #     cnt = 1
+    #     while True:
+    #         next_game = self.manager.get_next_game()
+    #         if game.game_id == next_game.game_id:
+    #             break
+    #         else:
+    #             cnt += 1
+    #     # Should be 16.
+    #     self.assertEqual(16, cnt)
