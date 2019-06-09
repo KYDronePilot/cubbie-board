@@ -41,7 +41,7 @@ class TestLCDDisplay(TestCase):
         Try adding text to an image and displaying it.
 
         """
-        image = self.display._add_text('Testing is awesome!', self.cubs_logo)
+        image = self.display._add_bottom_text('Testing is awesome!', self.cubs_logo)
         self.display.display_image(image)
 
     def test_add_winner_text(self):

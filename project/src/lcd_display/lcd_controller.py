@@ -9,7 +9,7 @@ import os.path
 import pigpio
 from PIL import Image
 from decouple import config
-from typing import Dict
+from typing import Dict, Tuple
 
 from games.game_overview import GameOverview
 from .lcd_display import LCDDisplay
@@ -123,49 +123,67 @@ class LcdController:
         # Ensure backlights are on.
         self._turn_on_displays()
 
-    def display_team_logos_final(self, home_team, away_team, home_wins):
-        # type: (str, str, bool) -> None
+    def _add_winner_text(self, home_logo, away_logo, game_overview):
+        # type: (Image, Image, GameOverview) -> Tuple[Image, Image]
         """
-        Display team logos with win message for a game that is final.
-
-        Notes:
-            TODO: Display Cubs 'W' logo here.
+        Add winner text to the winner's logo.
 
         Args:
-            home_team (str): Name of home team
-            away_team (str): Name of away team
-            home_wins (bool): Whether or not the home team won
+            home_logo (Image): Home team's logo
+            away_logo (Image): Away team's logo
+            game_overview (GameOverview): Overview of game
+
+        Returns:
+            Tuple[Image, Image]: (home, away) logos, with modification
 
         """
-        # Get copies of team logos.
-        home_logo = self.logos[home_team].copy()
-        away_logo = self.logos[away_team].copy()
         # Add win message to the team that won's logo.
-        if home_wins:
-            home_logo = self.home_display.add_winner_text(home_team, home_logo)
-        else:
-            away_logo = self.away_display.add_winner_text(away_team, away_logo)
-        self._display_images(home_logo, away_logo)
+        if game_overview.home_won:
+            return self.home_display.add_winner_text(game_overview.home_team_name, home_logo), away_logo
+        return home_logo, self.away_display.add_winner_text(game_overview.away_team_name, away_logo)
+
+    def _get_team_logos(self, game_overview):
+        # type: (GameOverview) -> Tuple[Image, Image]
+        """
+        Get the team logos.
+
+        Notes:
+            Gets Cubs 'W' logo when they win.
+
+        Args:
+            game_overview (GameOverview): Overview of game
+
+        Returns:
+            Tuple[Image, Image]: (home, away) logos
+
+        """
+        # Get the logos.
+        home_logo = self.logos[game_overview.home_team_name]
+        away_logo = self.logos[game_overview.away_team_name]
+        # Get Cubs 'W' logo if they won.
+        if game_overview.is_final() and game_overview.is_playing('Cubs'):
+            if game_overview.home_team_name == 'Cubs':
+                return self.logos['cubs_w_flag'].copy(), away_logo.copy()
+            return home_logo.copy(), self.logos['cubs_w_flag'].copy()
+        # Else, just return copies of the team logos.
+        return home_logo.copy(), away_logo.copy()
 
     def display_team_logos(self, game_overview):
         # type: (GameOverview) -> None
         """
         Display logos for an overview.
 
-        Notes:
-            Displays win message for games that are final.
-
         Args:
             game_overview (GameOverview): Overview of game
 
         """
-        # If final, display logos with annotation.
+        # Get the team logos.
+        home_logo, away_logo = self._get_team_logos(game_overview)
+        # Add status headers.
+        home_logo = self.home_display.add_status_header(game_overview.status, home_logo)
+        away_logo = self.away_display.add_status_header(game_overview.status, away_logo)
+        # If final, annotate with winner message.
         if game_overview.is_final():
-            self.display_team_logos_final(
-                game_overview.home_team_name,
-                game_overview.away_team_name,
-                game_overview.home_team_runs > game_overview.away_team_runs
-            )
-        # Else, display normal logos.
-        else:
-            self._display_images(self.logos[game_overview.home_team_name], self.logos[game_overview.away_team_name])
+            home_logo, away_logo = self._add_winner_text(home_logo, away_logo, game_overview)
+        # Display the logos.
+        self._display_images(home_logo, away_logo)

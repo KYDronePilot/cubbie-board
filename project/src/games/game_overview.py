@@ -137,3 +137,18 @@ class GameOverview(object):
 
         """
         return team == self.home_team_name or team == self.away_team_name
+
+    @property
+    def home_won(self):
+        # type: () -> bool
+        """
+        Check if the home team won.
+
+        Notes:
+            Does not consider if game is over.
+
+        Returns:
+            bool: Whether the home team won
+
+        """
+        return self.home_team_runs > self.away_team_runs
