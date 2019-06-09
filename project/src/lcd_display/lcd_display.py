@@ -73,9 +73,9 @@ class LCDDisplay(TFT.ST7735):
         )
         # Status header add functions for different statuses.
         self._status_header_add_functions = {
-            GameOverview.IN_PROGRESS_STATUS: lambda image: image,
             GameOverview.WARM_UP_STATUS: self._add_warm_up_header,
-            GameOverview.FINAL_STATUS: self._add_final_header
+            GameOverview.FINAL_STATUS: self._add_final_header,
+            GameOverview.POSTPONED_STATUS: self._add_postponed_header
         }  # type: Dict[str, Callable]
         # Load the default font to be used.
         self._default_font = LCDDisplay._get_font('arial.ttf', 15)  # type: ImageFont.FreeTypeFont
@@ -187,11 +187,15 @@ class LCDDisplay(TFT.ST7735):
         return self._draw_text_background(
             text,
             image,
-            text_x, text_y,
-            0, 0,
-            self._width, text_h + 4,
+            text_x,
+            text_y,
+            0,
+            0,
+            self._width,
+            text_h + 4,
             self._default_font,
-            font_color, bg_color
+            font_color,
+            bg_color
         )
 
     def _add_bottom_text(self, text, image):
@@ -216,11 +220,15 @@ class LCDDisplay(TFT.ST7735):
         return self._draw_text_background(
             text,
             image,
-            text_x, text_y,
-            0, text_y - 5,
-               text_w + 10, text_y + text_h + 5,
+            text_x,
+            text_y,
+            0,
+            text_y - 5,
+            text_w + 10,
+            text_y + text_h + 5,
             self._default_font,
-            LCDDisplay.WHITE, LCDDisplay.GRAY
+            LCDDisplay.WHITE,
+            LCDDisplay.GRAY
         )
 
     def add_winner_text(self, team, logo):

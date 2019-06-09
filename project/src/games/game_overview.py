@@ -32,6 +32,7 @@ class GameOverview(object):
     WARM_UP_STATUS = 'Warmup'  # type: ClassVar[str]
     IN_PROGRESS_STATUS = 'In Progress'  # type: ClassVar[str]
     FINAL_STATUS = 'Final'  # type: ClassVar[str]
+    POSTPONED_STATUS = 'Postponed'  # type: ClassVar[str]
 
     def __init__(
             self,
@@ -123,6 +124,30 @@ class GameOverview(object):
 
         """
         return self.status == GameOverview.WARM_UP_STATUS
+
+    def is_postponed(self):
+        # type: () -> bool
+        """
+        Checks if game has been postponed.
+
+        Returns:
+            bool: Whether or not the game has been postponed
+
+        """
+        return self.status == GameOverview.POSTPONED_STATUS
+
+    def should_display_game(self):
+        # type: () -> bool
+        """
+        Checks if the game should be displayed.
+
+        Determined by looking at the status.
+
+        Returns:
+            bool: Whether the game should be displayed
+
+        """
+        return self.is_active() or self.is_final() or self.is_warm_up() or self.is_postponed()
 
     def is_playing(self, team):
         # type: (str) -> bool

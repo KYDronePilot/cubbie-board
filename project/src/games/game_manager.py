@@ -149,10 +149,10 @@ class GameManager(object):
         # If active preferred team, just add it.
         if pref_team_i != -1:
             self.overview_queue.put(self.overviews[pref_team_i])
-        # Otherwise, refill with games that are active or final.
+        # Otherwise, refill with games that should be displayed.
         else:
             for overview in self.overviews:
-                if overview.is_active() or overview.is_final():
+                if overview.should_display_game():
                     self.overview_queue.put(overview)
 
     def _are_all_final(self):
