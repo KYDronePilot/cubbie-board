@@ -108,6 +108,20 @@ class CubbieBoard(object):
         self.segment_controller.write_update('home_team_runs', new_overview.home_team_runs)
         self.segment_controller.write_update('away_team_runs', new_overview.away_team_runs)
 
+    def exit(self):
+        # type: () -> None
+        """
+        Prepare for script shutdown.
+
+        Exits all active threads.
+
+        Returns:
+            None
+
+        """
+        self.lcd_controller.exit()
+        self.segment_controller.exit()
+
     def exit_signal_handler(self, sig, frame):
         """
         Signal handler for exiting the program.
@@ -121,8 +135,7 @@ class CubbieBoard(object):
 
         """
         print('Exiting')
-        self.lcd_controller.exit()
-        self.segment_controller.exit()
+        self.exit()
         exit(0)
 
     def run(self):
@@ -148,4 +161,10 @@ class CubbieBoard(object):
 
 if __name__ == '__main__':
     main = CubbieBoard()
-    main.run()
+    # Run program, catching any exceptions.
+    try:
+        main.run()
+    # If exception, print and exit all active threads.
+    except Exception as e:
+        print(e)
+        main.exit()

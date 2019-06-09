@@ -1,6 +1,5 @@
 import json
 
-import requests
 from typing import List
 
 from .base_api import BaseAPI
@@ -39,7 +38,11 @@ class DayGameInfoAPI(BaseAPI):
             'x-api-key': self.api_key
         }
         # Make the request.
-        result = requests.post(self.url, data=json.dumps(request_data, separators=(',', ':')), headers=headers)
+        result = DayGameInfoAPI.post_request_wrapper(
+            self.url,
+            json.dumps(request_data, separators=(',', ':')),
+            headers
+        )
         # Parse response.
         json_response = json.loads(result.content)
         # If API failed, return nothing.

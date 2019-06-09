@@ -5,7 +5,6 @@ For holding the API manager for game overview details.
 
 import json
 
-import requests
 from typing import List
 
 from .base_api import BaseAPI
@@ -35,13 +34,11 @@ class GameOverviewAPI(BaseAPI):
             'Content-Type': 'application/json',
             'x-api-key': self.api_key
         }
-        # Make request.
-        # TODO: Make a retry wrapper for continually pounding at the URL until the API answers.
-        # TODO: Exception received: requests.exceptions.ConnectionError
-        result = requests.post(
+        # Make the request.
+        result = GameOverviewAPI.post_request_wrapper(
             self.url,
-            data=json.dumps(game_ids, separators=(',', ':')),
-            headers=headers
+            json.dumps(game_ids, separators=(',', ':')),
+            headers
         )
         # Parse response.
         json_response = json.loads(result.content)
