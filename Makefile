@@ -24,3 +24,8 @@ copy_project:
 install_init_script:
 	cp ./cubbie-board/src/cubbieboard.service /etc/systemd/system/multi-user.target.wants/
 	sudo systemctl daemon-reload
+
+uninstall:
+	rm -rf /var/apps
+	rm /etc/systemd/system/multi-user.target.wants/cubbieboard.service
+	sudo systemctl daemon-reload
