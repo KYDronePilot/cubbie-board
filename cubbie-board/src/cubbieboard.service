@@ -1,0 +1,15 @@
+# cubbieboard.service
+[Unit]
+Description=Cubbie board scoreboard
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/env python2.7 /var/apps/cubbieboard/src/main.py
+Nice=5
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
