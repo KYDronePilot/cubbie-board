@@ -14,15 +14,11 @@ MAIN_MODULE="$(realpath ./cubbie-board/src/main.py)"
 install: copy_project install_init_script
 
 
-# Create an executable to run the main module.
-create_executable:
-	echo "#!$BASH_DIR\n\nset -e\n$PYTHON_PATH $MAIN_MODULE\n" > "$BIN_DIR/$PROJECT_NAME"
-
 # Copy the program files to a project directory.
 copy_project:
-	mkdir -p /var/apps/$PROJECT_NAME
-	rsync -av --progress ./cubbie-board/* /var/apps/$PROJECT_NAME --exclude scoreboard_images
-	cp .env /var/apps/$PROJECT_NAME
+	mkdir -p /var/apps/$(PROJECT_NAME)
+	rsync -av --progress ./cubbie-board/* /var/apps/$(PROJECT_NAME) --exclude scoreboard_images
+	cp .env /var/apps/$(PROJECT_NAME)
 
 # Install Systemd script.
 install_init_script:
