@@ -67,10 +67,10 @@ class CubbieBoard(object):
         # Get manager for current day.
         today_game_manager = GameManager(date.today(), self.preferred_team)
         # If no games available, get manager for previous day.
-        if today_game_manager.get_next_game() is None:
+        if not today_game_manager.are_queued_games():
             yesterday_game_manager = GameManager(date.today() - timedelta(days=1), self.preferred_team)
-            # If a game is available, use that manager.
-            if yesterday_game_manager.get_next_game() is not None:
+            # If one or more games are available, use that manager.
+            if yesterday_game_manager.are_queued_games():
                 return yesterday_game_manager
         return today_game_manager
 

@@ -155,10 +155,14 @@ class GameManager(object):
                 if overview.should_display_game():
                     self.overview_queue.put(overview)
 
-    def _are_all_final(self):
+    def _are_all_over(self):
         # type: () -> bool
         """
-        Check if all the overviews are final.
+        Check if all the overviews are over.
+
+        Notes:
+            "over" is defined as a game that is final or will not be played on its scheduled day
+            (i.e. final, postponed).
 
         Returns:
             bool: Whether or not all the overviews are final
@@ -166,9 +170,20 @@ class GameManager(object):
         """
         cnt = 0
         for game in self.overviews:
-            if game.is_final():
+            if game.is_final() or game.is_postponed():
                 cnt += 1
         return cnt == len(self.overviews)
+
+    def are_queued_games(self):
+        # type: () -> bool
+        """
+        Checks if there are games in the queue.
+
+        Returns:
+            bool: Whether there are games in the queue.
+
+        """
+        return not self.overview_queue.empty()
 
     def refresh_overviews(self):
         # type: () -> None
@@ -184,8 +199,8 @@ class GameManager(object):
         """
         # Update games, getting preferred team game index if active.
         pref_team_i = self._update_overviews()
-        # Refill game queue if not all games are final.
-        if not self._are_all_final():
+        # Refill game queue if not all games are over.
+        if not self._are_all_over():
             self._refill_queue(pref_team_i=pref_team_i)
 
     def get_next_game(self):
@@ -197,11 +212,11 @@ class GameManager(object):
             Union[None, GameOverview]: Next overview to display if exists, None if not
 
         """
-        # If not empty, get next game.
-        if not self.overview_queue.empty():
+        # If there are queued games, get next game.
+        if self.are_queued_games():
             return self.overview_queue.get()
         # Else, refresh and try again.
         self.refresh_overviews()
-        if not self.overview_queue.empty():
+        if self.are_queued_games():
             return self.overview_queue.get()
         return None
